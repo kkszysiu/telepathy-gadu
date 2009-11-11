@@ -289,25 +289,25 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
                 True, True)
         }, signature='s(ubb)')
 
-    # papyon.event.ContactEventInterface
-    def on_contact_presence_changed(self, contact):
-        handle = ButterflyHandleFactory(self, 'contact',
-                contact.account, contact.network_id)
-        logger.info("Contact %s presence changed to '%s'" % (unicode(handle),
-            contact.presence))
-        self._presence_changed(handle, contact.presence, contact.personal_message)
-
-    # papyon.event.ContactEventInterface
-    on_contact_personal_message_changed = on_contact_presence_changed
-
-    # papyon.event.ProfileEventInterface
-    def on_profile_presence_changed(self):
-        profile = self.msn_client.profile
-        self._presence_changed(ButterflyHandleFactory(self, 'self'),
-                profile.presence, profile.personal_message)
-
-    # papyon.event.ProfileEventInterface
-    on_profile_personal_message_changed = on_profile_presence_changed
+#    # papyon.event.ContactEventInterface
+#    def on_contact_presence_changed(self, contact):
+#        handle = ButterflyHandleFactory(self, 'contact',
+#                contact.account, contact.network_id)
+#        logger.info("Contact %s presence changed to '%s'" % (unicode(handle),
+#            contact.presence))
+#        self._presence_changed(handle, contact.presence, contact.personal_message)
+#
+#    # papyon.event.ContactEventInterface
+#    on_contact_personal_message_changed = on_contact_presence_changed
+#
+#    # papyon.event.ProfileEventInterface
+#    def on_profile_presence_changed(self):
+#        profile = self.msn_client.profile
+#        self._presence_changed(ButterflyHandleFactory(self, 'self'),
+#                profile.presence, profile.personal_message)
+#
+#    # papyon.event.ProfileEventInterface
+#    on_profile_personal_message_changed = on_profile_presence_changed
 
     @async
     def _presence_changed(self, handle, presence, personal_message):

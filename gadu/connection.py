@@ -17,7 +17,7 @@ import telepathy
 #import papyon.event
 
 from gadu.presence import GaduPresence
-#from butterfly.aliasing import ButterflyAliasing
+from gadu.aliasing import GaduAliasing
 #from butterfly.avatars import ButterflyAvatars
 from gadu.handle import GaduHandleFactory
 from gadu.capabilities import GaduCapabilities
@@ -135,7 +135,7 @@ class GaduClientFactory(protocol.ClientFactory):
 class GaduConnection(telepathy.server.Connection,
         telepathy.server.ConnectionInterfaceRequests,
         GaduPresence,
-#        ButterflyAliasing,
+        GaduAliasing,
 #        ButterflyAvatars,
         GaduCapabilities,
         GaduContacts,
@@ -205,7 +205,7 @@ class GaduConnection(telepathy.server.Connection,
             telepathy.server.Connection.__init__(self, 'gadugadu', account, 'gadu')
             telepathy.server.ConnectionInterfaceRequests.__init__(self)
             GaduPresence.__init__(self)
-#            ButterflyAliasing.__init__(self)
+            GaduAliasing.__init__(self)
 #            ButterflyAvatars.__init__(self)
             GaduCapabilities.__init__(self)
             GaduContacts.__init__(self)
@@ -262,23 +262,27 @@ class GaduConnection(telepathy.server.Connection,
         handles = []
         for name in names:
             if handle_type == telepathy.HANDLE_TYPE_CONTACT:
-                name = name.rsplit('#', 1)
-                contact_name = name[0]
-                if len(name) > 1:
-                    network_id = int(name[1])
-                else:
-                    network_id = papyon.NetworkID.MSN
-                contacts = self.msn_client.address_book.contacts.\
-                        search_by_account(contact_name).\
-                        search_by_network_id(network_id)
+                contact_name = name
+                #if len(name) > 1:
+                #    network_id = int(name[1])
+                #else:
+                #    network_id = papyon.NetworkID.MSN
+                #contacts = self.msn_client.address_book.contacts.\
+                #        search_by_account(contact_name).\
+                #        search_by_network_id(network_id)
+                #
+                #if len(contacts) > 0:
+                #    contact = contacts[0]
+                #    handle = GaduHandleFactory(self, 'contact',
+                #            contact.account, contact.network_id)
+                #else:
+                #    handle = GaduHandleFactory(self, 'contact',
+                #            contact_name, network_id)
 
-                if len(contacts) > 0:
-                    contact = contacts[0]
-                    handle = GaduHandleFactory(self, 'contact',
-                            contact.account, contact.network_id)
-                else:
-                    handle = GaduHandleFactory(self, 'contact',
-                            contact_name, network_id)
+                contact = self.profile.get_contact(int(contact_name))
+
+                handle = GaduHandleFactory(self, 'contact',
+                            contact.uin, None)
             elif handle_type == telepathy.HANDLE_TYPE_LIST:
                 handle = GaduHandleFactory(self, 'list', name)
             elif handle_type == telepathy.HANDLE_TYPE_GROUP:
@@ -352,16 +356,11 @@ class GaduConnection(telepathy.server.Connection,
             self.configfile.make_contacts_file(None, self.profile.contacts)
             reactor.callLater(5, self.updateContactsFile)
 
-#        else:
-#            print 'aaa'
-#            for contact in self.profile.contacts:
-#                self.profile.addNewContact(contact)
-#                print "Added contact ShowName: "+str(contact.ShowName)+" status: "+str(contact.status)+" desc: "+str(contact.description)
-        #self.profile.setMyState('DND')
         self.makeTelepathyContactsChannel()
 
     def on_loginFailed(self):
         logger.info("Method on_loginFailed called.")
+        self._status = telepathy.CONNECTION_STATUS_DISCONNECTED
         self.StatusChanged(telepathy.CONNECTION_STATUS_DISCONNECTED,
                 telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED)
         reactor.stop()

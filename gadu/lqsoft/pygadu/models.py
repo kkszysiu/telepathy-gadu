@@ -255,6 +255,9 @@ class GaduContact(FlatXMLObject):
         self.status = status
         if desc: self.description = desc
 
+    def updateName(self, name):
+        self.ShowName = name
+
 #     @classmethod
 #     def from_request_string(cls, rqs):
 #         dict = {}
