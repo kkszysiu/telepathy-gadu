@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 import weakref
 import logging
 
@@ -186,20 +187,27 @@ class GaduConnection(telepathy.server.Connection,
             contacts_list = self.configfile.get_contacts()
 
             for contact_from_list in contacts_list['contacts']:
+#                c = GaduContact.from_xml(contact_from_list)
+#                i = 0
+#                for contact in self.profile.contacts:
+#                    i = i+1
+#                    if contact.uin != c.uin:
+#                        self.profile.addContact( c )
+#                if i == 0:
+#                    self.profile.addContact( c )
                 c = GaduContact.from_xml(contact_from_list)
-                i = 0
-                for contact in self.profile.contacts:
-                    i = i+1
-                    if contact.uin != c.uin:
-                        self.profile.addContact( c )
-                if i == 0:
+                try:
+                    c.uin
                     self.profile.addContact( c )
+                except:
+                    pass
 
             print 'We have '+str(self.configfile.get_contacts_count())+' contacts in file.'
                 
 
             self.factory = GaduClientFactory(self.profile)
             self._channel_manager = GaduChannelManager(self)
+            self._recv_id = 0
 
             # Call parent initializers
             telepathy.server.Connection.__init__(self, 'gadugadu', account, 'gadu')
@@ -342,21 +350,31 @@ class GaduConnection(telepathy.server.Connection,
 #        props = self._generate_props(telepathy.CHANNEL_TYPE_CONTACT_LIST,
 #            handle, False)
 #        self._channel_manager.channel_for_props(props, signal=True)
-            
+           
+    def on_contactsImported(self):
+        #TODO: that contacts should be written into XML file with contacts. I need to write it :)
+        logger.info("Contacts imported.")
+
+        self.configfile.make_contacts_file(None, self.profile.contacts)
+        reactor.callLater(5, self.updateContactsFile)
+
+        self.makeTelepathyContactsChannel()
+
     def on_loginSuccess(self):
         logger.info("Connected")
-        self._status = telepathy.CONNECTION_STATUS_CONNECTED
-        self.StatusChanged(telepathy.CONNECTION_STATUS_CONNECTED,
-                telepathy.CONNECTION_STATUS_REASON_REQUESTED)
 
         #if its a first run or we dont have any contacts in contacts file yet then try to import contacts from server
         if self.configfile.get_contacts_count() == 0:
-            self.profile.importContacts(on_contactsImported)
+            self.profile.importContacts(self.on_contactsImported)
         else:
             self.configfile.make_contacts_file(None, self.profile.contacts)
             reactor.callLater(5, self.updateContactsFile)
 
-        self.makeTelepathyContactsChannel()
+            self.makeTelepathyContactsChannel()
+
+        self._status = telepathy.CONNECTION_STATUS_CONNECTED
+        self.StatusChanged(telepathy.CONNECTION_STATUS_CONNECTED,
+                telepathy.CONNECTION_STATUS_REASON_REQUESTED)
 
     def on_loginFailed(self):
         logger.info("Method on_loginFailed called.")
@@ -372,12 +390,22 @@ class GaduConnection(telepathy.server.Connection,
         self._presence_changed(handle, contact.status, contact.description)
 
     def on_messageReceived(self, msg):
-        print "Msg from %r %d %d [%r] [%r]" % (msg.sender, msg.content.offset_plain, msg.content.offset_attrs, msg.content.plain_message, msg.content.html_message)
-        self.config.profile.sendTo(msg.sender, msg.content.plain_message)
+        handle = GaduHandleFactory(self, 'contact',
+                str(msg.sender), None)
+        timestamp = int(time.time())
+        type = telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL
+        logger.info("User %r sent a message" % handle)
 
-    def on_contactsImported(self):
-        #TODO: that contacts should be written into XML file with contacts. I need to write it :)
-        logger.info("Contacts imported.")
+        props = self._generate_props(telepathy.CHANNEL_TYPE_TEXT,
+                handle, False)
+        channel = self._channel_manager.channel_for_props(props,
+                signal=True, conversation=None)
+        print str(msg.content.plain_message.strip())
+        channel.Received(self._recv_id, timestamp, handle, type, 0, "%s" % (msg.content.plain_message.rstrip('\0')))
+        self._recv_id += 1
+
+        print "Msg from %r %d %d [%r] [%r]" % (msg.sender, msg.content.offset_plain, msg.content.offset_attrs, msg.content.plain_message, msg.content.html_message)
+        #self.config.profile.sendTo(msg.sender, msg.content.plain_message)
 
 
     # papyon.event.ClientEventInterface

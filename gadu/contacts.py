@@ -72,8 +72,8 @@ class GaduContacts(telepathy.server.ConnectionInterfaceContacts):
                 lambda x: zip(x, self.InspectHandles(handle_type, x)),
             telepathy.CONNECTION_INTERFACE_SIMPLE_PRESENCE :
                 lambda x: self.GetPresences(x).items(),
-#            telepathy.CONNECTION_INTERFACE_ALIASING :
-#                lambda x: self.GetAliases(x).items(),
+            telepathy.CONNECTION_INTERFACE_ALIASING :
+                lambda x: self.GetAliases(x).items(),
 #            telepathy.CONNECTION_INTERFACE_AVATARS :
 #                lambda x: self.GetKnownAvatarTokens(x).items(),
             telepathy.CONNECTION_INTERFACE_CAPABILITIES :

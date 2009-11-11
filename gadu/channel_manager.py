@@ -25,9 +25,9 @@ import telepathy
 
 from gadu.channel.contact_list import GaduContactListChannelFactory
 #from butterfly.channel.group import ButterflyGroupChannel
-#from butterfly.channel.text import ButterflyTextChannel
+from gadu.channel.text import GaduTextChannel
 #from butterfly.channel.media import ButterflyMediaChannel
-#from butterfly.handle import ButterflyHandleFactory
+from gadu.handle import GaduHandleFactory
 
 __all__ = ['GaduChannelManager']
 

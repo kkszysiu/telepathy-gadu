@@ -31,3 +31,5 @@
 /gadu/presence.pyc
 /gadu/util/decorator.pyc
 /gadu/util/__init__.pyc
+/gadu/aliasing.pyc
+/gadu/channel/text.pyc

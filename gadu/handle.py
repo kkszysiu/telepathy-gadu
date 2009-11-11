@@ -81,7 +81,7 @@ class GaduSelfHandle(GaduHandle):
 
     def __init__(self, connection, id):
         handle_type = telepathy.HANDLE_TYPE_CONTACT
-        handle_name = connection._account[0] + "#" + str("1")
+        handle_name = connection._account[0]
         self._connection = connection
         GaduHandle.__init__(self, connection, id, handle_type, handle_name)
 
@@ -105,7 +105,6 @@ class GaduContactHandle(GaduHandle):
 
     @property
     def contact(self):
-        print "GaduContactHandle %s" % (self.account)
         result = self._connection.gadu_client.get_contact(int(self.account))
         return result
 

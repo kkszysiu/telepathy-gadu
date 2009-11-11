@@ -246,11 +246,11 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
             except AttributeError:
                 #I dont know what to do here. Do I really need this? :P
                 contact = handle.contact
-                #print "get_simple_presences, contact uin: %s, status: %x, desc: %s" % (contact.uin, contact.status, contact.description)
+                print "get_simple_presences, contact uin: %s, status: %x, desc: %s" % (contact.uin, contact.status, contact.description)
                 if contact is not None:
                     #print "Contact status: %s" % (contact.status)
                     presence = GaduPresenceMapping.from_gg_to_tp[contact.status]
-                    personal_message = unicode(contact.description, "utf-8")
+                    personal_message = str(contact.description)
                 else:
                     presence = GaduPresenceMapping.OFFLINE
                     personal_message = u""
