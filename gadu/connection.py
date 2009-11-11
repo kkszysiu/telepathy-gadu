@@ -341,6 +341,7 @@ class GaduConnection(telepathy.server.Connection,
             
     def on_loginSuccess(self):
         logger.info("Connected")
+        self._status = telepathy.CONNECTION_STATUS_CONNECTED
         self.StatusChanged(telepathy.CONNECTION_STATUS_CONNECTED,
                 telepathy.CONNECTION_STATUS_REASON_REQUESTED)
 
@@ -367,6 +368,9 @@ class GaduConnection(telepathy.server.Connection,
 
     def on_updateContact(self, contact):
         print "updateContact contact: "+repr(contact.uin)
+        handle = GaduHandleFactory(self, 'contact',
+            contact.uin, None)
+        self._presence_changed(handle, contact.status, contact.description)
 
     def on_messageReceived(self, msg):
         print "Msg from %r %d %d [%r] [%r]" % (msg.sender, msg.content.offset_plain, msg.content.offset_attrs, msg.content.plain_message, msg.content.html_message)

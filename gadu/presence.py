@@ -58,8 +58,41 @@ class GaduPresenceMapping(object):
             'BUSY':                     BUSY,
             'DND':                      IDLE,
             'HIDDEN':                   INVISIBLE,
-            'NOT_AVAILBLE':               OFFLINE
+            'NOT_AVAILBLE':             OFFLINE
             }
+
+    from_gg_to_tp = {
+#        'NOT_AVAILBLE':         0x0001,
+#        'NOT_AVAILBLE_DESC':    0x0015,
+#        'FFC':                  0x0017,
+#        'FFC_DESC':             0x0018,
+#        'AVAILBLE':             0x0002,
+#        'AVAILBLE_DESC':        0x0004,
+#        'BUSY':                 0x0003,
+#        'BUSY_DESC':            0x0005,
+#        'DND':                  0x0021,
+#        'DND_DESC':             0x0022,
+#        'HIDDEN':               0x0014,
+#        'HIDDEN_DESC':          0x0016,
+#        'DND':                  0x0021,
+#        'BLOCKED':              0x0006,
+#        'MASK_FRIEND':          0x8000,
+#        'MASK_GFX':             0x0100,
+#        'MASK_STATUS':          0x4000,
+            0:                          OFFLINE,
+            0x0001:                     OFFLINE,
+            0x4015:                     OFFLINE,
+            0x0017:                     ONLINE,
+            0x4018:                     ONLINE,
+            0x0002:                     ONLINE,
+            0x4004:                     ONLINE,
+            0x0003:                     BUSY,
+            0x4005:                     BUSY,
+            0x0021:                     IDLE,
+            0x4022:                     IDLE,
+            0x0014:                     INVISIBLE,
+            0x4016:                     INVISIBLE
+    }
 
     to_presence_type = {
             ONLINE:     telepathy.constants.CONNECTION_PRESENCE_TYPE_AVAILABLE,
@@ -91,31 +124,19 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
         # you get one of these for each status
         # {name:(type, self, exclusive, {argument:types}}
         return {
-            ButterflyPresenceMapping.ONLINE:(
+            GaduPresenceMapping.ONLINE:(
                 telepathy.CONNECTION_PRESENCE_TYPE_AVAILABLE,
                 True, True, arguments),
-            ButterflyPresenceMapping.AWAY:(
-                telepathy.CONNECTION_PRESENCE_TYPE_AWAY,
-                True, True, arguments),
-            ButterflyPresenceMapping.BUSY:(
+            GaduPresenceMapping.BUSY:(
                 telepathy.CONNECTION_PRESENCE_TYPE_BUSY,
                 True, True, arguments),
-            ButterflyPresenceMapping.IDLE:(
+            GaduPresenceMapping.IDLE:(
                 telepathy.CONNECTION_PRESENCE_TYPE_EXTENDED_AWAY,
                 True, True, arguments),
-            ButterflyPresenceMapping.BRB:(
-                telepathy.CONNECTION_PRESENCE_TYPE_AWAY,
-                True, True, arguments),
-            ButterflyPresenceMapping.PHONE:(
-                telepathy.CONNECTION_PRESENCE_TYPE_AWAY,
-                True, True, arguments),
-            ButterflyPresenceMapping.LUNCH:(
-                telepathy.CONNECTION_PRESENCE_TYPE_EXTENDED_AWAY,
-                True, True, arguments),
-            ButterflyPresenceMapping.INVISIBLE:(
+            GaduPresenceMapping.INVISIBLE:(
                 telepathy.CONNECTION_PRESENCE_TYPE_HIDDEN,
                 True, True, {}),
-            ButterflyPresenceMapping.OFFLINE:(
+            GaduPresenceMapping.OFFLINE:(
                 telepathy.CONNECTION_PRESENCE_TYPE_OFFLINE,
                 True, True, {})
         }
@@ -131,6 +152,8 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
         status, arguments = statuses.items()[0]
         if status == GaduPresenceMapping.OFFLINE:
             self.Disconnect()
+
+        print "SetStatus emitted"
 
         presence = GaduPresenceMapping.to_gg[status]
         message = arguments.get('message', u'')
@@ -151,17 +174,31 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
         presences = {}
         for handle_id in contacts:
             handle = self.handle(telepathy.HANDLE_TYPE_CONTACT, handle_id)
+#            try:
+#                contact = handle.contact
+#            except AttributeError:
+#                contact = handle.profile
+#
+#            if contact is not None:
+#                presence = ButterflyPresenceMapping.to_telepathy[contact.presence]
+#                personal_message = unicode(contact.personal_message, "utf-8")
+#            else:
+#                presence = GaduPresenceMapping.OFFLINE
+#                personal_message = u""
             try:
-                contact = handle.contact
-            except AttributeError:
                 contact = handle.profile
-
-            if contact is not None:
-                presence = ButterflyPresenceMapping.to_telepathy[contact.presence]
-                personal_message = unicode(contact.personal_message, "utf-8")
-            else:
-                presence = ButterflyPresenceMapping.OFFLINE
+                presence = GaduPresenceMapping.OFFLINE
                 personal_message = u""
+            except AttributeError:
+                #I dont know what to do here. Do I really need this? :P
+                contact = handle.contact
+                print "get_simple_presences, contact uin: %s, status: %s, desc: %s" % (contact.uin, contact.status, contact.description)
+                if contact is not None:
+                    presence = GaduPresenceMapping.to_telepathy[contact.status]
+                    personal_message = unicode(contact.description, "utf-8")
+                else:
+                    presence = GaduPresenceMapping.OFFLINE
+                    personal_message = u""
 
             arguments = {}
             if personal_message:
@@ -180,8 +217,7 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
         if status == GaduPresenceMapping.OFFLINE:
             self.Disconnect()
 
-        print "Choosen presence: %s" % (status)
-
+        print "SetStatus status: %s" % (status)
 
         try:
             presence = GaduPresenceMapping.to_gg[status]
@@ -197,26 +233,37 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
             self._initial_presence = presence
             self._initial_personal_message = message
         else:
-            self.msn_client.profile.personal_message = message
-            self.msn_client.profile.presence = presence
-
+            self.profile.setMyState(presence, message)
+            
     def get_simple_presences(self, contacts):
         presences = {}
         for handle_id in contacts:
             handle = self.handle(telepathy.HANDLE_TYPE_CONTACT, handle_id)
             try:
-                contact = handle.contact
-            except AttributeError:
                 contact = handle.profile
-
-            if contact is not None:
-                presence = ButterflyPresenceMapping.to_telepathy[contact.presence]
-                personal_message = unicode(contact.personal_message, "utf-8")
-            else:
-                presence = ButterflyPresenceMapping.OFFLINE
+                presence = GaduPresenceMapping.OFFLINE
                 personal_message = u""
+            except AttributeError:
+                #I dont know what to do here. Do I really need this? :P
+                contact = handle.contact
+                #print "get_simple_presences, contact uin: %s, status: %x, desc: %s" % (contact.uin, contact.status, contact.description)
+                if contact is not None:
+                    #print "Contact status: %s" % (contact.status)
+                    presence = GaduPresenceMapping.from_gg_to_tp[contact.status]
+                    personal_message = unicode(contact.description, "utf-8")
+                else:
+                    presence = GaduPresenceMapping.OFFLINE
+                    personal_message = u""
 
-            presence_type = ButterflyPresenceMapping.to_presence_type[presence]
+#            if contact is not None:
+#
+#                presence = ButterflyPresenceMapping.to_telepathy[contact.presence]
+#                personal_message = unicode(contact.personal_message, "utf-8")
+#            else:
+#                presence = ButterflyPresenceMapping.OFFLINE
+#                personal_message = u""
+
+            presence_type = GaduPresenceMapping.to_presence_type[presence]
 
             presences[handle] = (presence_type, presence, personal_message)
         return presences
@@ -225,33 +272,21 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
         # you get one of these for each status
         # {name:(Type, May_Set_On_Self, Can_Have_Message}
         return dbus.Dictionary({
-            ButterflyPresenceMapping.ONLINE:(
+            GaduPresenceMapping.ONLINE:(
                 telepathy.CONNECTION_PRESENCE_TYPE_AVAILABLE,
                 True, True),
-            ButterflyPresenceMapping.AWAY:(
-                telepathy.CONNECTION_PRESENCE_TYPE_AWAY,
-                True, True),
-            ButterflyPresenceMapping.BUSY:(
+            GaduPresenceMapping.BUSY:(
                 telepathy.CONNECTION_PRESENCE_TYPE_BUSY,
                 True, True),
-            ButterflyPresenceMapping.IDLE:(
+            GaduPresenceMapping.IDLE:(
                 telepathy.CONNECTION_PRESENCE_TYPE_EXTENDED_AWAY,
                 True, True),
-            ButterflyPresenceMapping.BRB:(
-                telepathy.CONNECTION_PRESENCE_TYPE_AWAY,
-                True, True),
-            ButterflyPresenceMapping.PHONE:(
-                telepathy.CONNECTION_PRESENCE_TYPE_AWAY,
-                True, True),
-            ButterflyPresenceMapping.LUNCH:(
-                telepathy.CONNECTION_PRESENCE_TYPE_EXTENDED_AWAY,
-                True, True),
-            ButterflyPresenceMapping.INVISIBLE:(
+            GaduPresenceMapping.INVISIBLE:(
                 telepathy.CONNECTION_PRESENCE_TYPE_HIDDEN,
-                True, False),
-            ButterflyPresenceMapping.OFFLINE:(
+                True, True),
+            GaduPresenceMapping.OFFLINE:(
                 telepathy.CONNECTION_PRESENCE_TYPE_OFFLINE,
-                True, False)
+                True, True)
         }, signature='s(ubb)')
 
     # papyon.event.ContactEventInterface
@@ -276,9 +311,12 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
 
     @async
     def _presence_changed(self, handle, presence, personal_message):
-        presence = ButterflyPresenceMapping.to_telepathy[presence]
-        presence_type = ButterflyPresenceMapping.to_presence_type[presence]
-        personal_message = unicode(personal_message, "utf-8")
+        try:
+            presence = GaduPresenceMapping.from_gg_to_tp[presence]
+        except KeyError:
+            presence = GaduPresenceMapping.from_gg_to_tp[presence]
+        presence_type = GaduPresenceMapping.to_presence_type[presence]
+        personal_message = unicode(str(personal_message.text), "utf-8")
 
         self.PresencesChanged({handle: (presence_type, presence, personal_message)})
 

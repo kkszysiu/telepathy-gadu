@@ -144,6 +144,12 @@ class GaduProfile(object):
     def isContactExist(self, uin):
         return self.__contacts.has_key(uin)
 
+    def get_contact(self, uin):
+        if self.__contacts.has_key(uin):
+            return self.__contacts[uin]
+        else:
+            return None
+
     @property
     def contacts(self):
         return self.__contacts.itervalues()

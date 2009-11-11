@@ -88,7 +88,7 @@ class GaduSelfHandle(GaduHandle):
     @property
     def profile(self):
         #TODO: thats not required, it should be removed someday :)
-        return None
+        return False
 
 
 class GaduContactHandle(GaduHandle):
@@ -100,16 +100,14 @@ class GaduContactHandle(GaduHandle):
         self.network = contact_network
         self.pending_groups = set()
         self.pending_alias = None
+        self._connection = connection
         GaduHandle.__init__(self, connection, id, handle_type, handle_name)
 
     @property
     def contact(self):
-        result = self._conn.msn_client.address_book.contacts.\
-                search_by_account(self.account).\
-                search_by_network_id(self.network)
-        if len(result) == 0:
-            return None
-        return result[0]
+        print "GaduContactHandle %s" % (self.account)
+        result = self._connection.gadu_client.get_contact(int(self.account))
+        return result
 
 
 class GaduListHandle(GaduHandle):
