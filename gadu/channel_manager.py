@@ -54,12 +54,13 @@ class GaduChannelManager(telepathy.server.ChannelManager):
     def _get_list_channel(self, props):
         _, surpress_handler, handle = self._get_type_requested_handle(props)
 
-        logger.debug('New contact list channel')
         if handle.get_type() == telepathy.HANDLE_TYPE_GROUP:
             channel = GaduGroupChannel(self._conn, self, props)
+            logger.debug('New group channel')
         else:
             channel = GaduContactListChannelFactory(self._conn,
                 self, handle, props)
+            logger.debug('New contact list channel: %s' % (handle.name))
         return channel
 
     def _get_text_channel(self, props, conversation=None):

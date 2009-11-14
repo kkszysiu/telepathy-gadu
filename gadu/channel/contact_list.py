@@ -28,6 +28,7 @@ from gadu.handle import GaduHandleFactory
 
 __all__ = ['GaduContactListChannelFactory']
 
+logger = logging.getLogger('Gadu.ContactListChannel')
 
 class HandleMutex(object):
     def __init__(self):
@@ -113,8 +114,6 @@ def GaduContactListChannelFactory(connection, manager, handle, props):
 class GaduListChannel(
         telepathy.server.ChannelTypeContactList,
         telepathy.server.ChannelInterfaceGroup):
-#        telepathy.server.ChannelInterfaceGroup,
-#        papyon.event.AddressBookEventInterface):
     "Abstract Contact List channels"
 
     def __init__(self, connection, manager, props):
@@ -167,9 +166,8 @@ class GaduListChannel(
         local_pending = set()
         remote_pending = set()
 
-        #for contact in connection.msn_client.address_book.contacts:
         for contact in connection.gadu_client.contacts:
-            print 'New contact %s' % (contact.uin)
+            #logger.info("New contact %s, name: %s added." % (contact.uin, contact.ShowName))
             ad, lp, rp = self._filter_contact(contact)
             if ad or lp or rp:
                 handle = GaduHandleFactory(self._conn_ref(), 'contact',
@@ -215,25 +213,26 @@ class GaduSubscribeListChannel(GaduListChannel):
         #return (contact.is_member(papyon.Membership.FORWARD) and not
         #        contact.is_member(papyon.Membership.PENDING), False, False)
 
-    @Lockable(mutex, 'add_subscribe', 'finished_cb')
+    #@Lockable(mutex, 'add_subscribe', 'finished_cb')
     def _add(self, handle_id, message, finished_cb):
-        handle = self._conn.handle(telepathy.HANDLE_TYPE_CONTACT, handle_id)
-        if handle.contact is not None and \
-           handle.contact.is_member(papyon.Membership.FORWARD):
-            return True
-
-        account = handle.account
-        network = handle.network
-        groups = list(handle.pending_groups)
-        handle.pending_groups = set()
-        ab = self._conn.msn_client.address_book
-        ab.add_messenger_contact(account,
-                network_id=network,
-                auto_allow=False,
-                invite_message=message.encode('utf-8'),
-                groups=groups,
-                done_cb=(finished_cb,),
-                failed_cb=(finished_cb,))
+        logger.info("Subscribe - Add Members called.")
+#        handle = self._conn.handle(telepathy.HANDLE_TYPE_CONTACT, handle_id)
+#        if handle.contact is not None and \
+#           handle.contact.is_member(papyon.Membership.FORWARD):
+#            return True
+#
+#        account = handle.account
+#        network = handle.network
+#        groups = list(handle.pending_groups)
+#        handle.pending_groups = set()
+#        ab = self._conn.msn_client.address_book
+#        ab.add_messenger_contact(account,
+#                network_id=network,
+#                auto_allow=False,
+#                invite_message=message.encode('utf-8'),
+#                groups=groups,
+#                done_cb=(finished_cb,),
+#                failed_cb=(finished_cb,))
 
     @Lockable(mutex, 'rem_subscribe', 'finished_cb')
     def _remove(self, handle_id, finished_cb):

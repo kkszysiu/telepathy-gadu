@@ -139,10 +139,7 @@ class GaduConnection(telepathy.server.Connection,
         GaduAliasing,
 #        ButterflyAvatars,
         GaduCapabilities,
-        GaduContacts,
-#        papyon.event.ClientEventInterface,
-#        papyon.event.InviteEventInterface,
-#        papyon.event.OfflineMessagesEventInterface
+        GaduContacts
         ):
 
 
@@ -167,7 +164,6 @@ class GaduConnection(telepathy.server.Connection,
             server = (parameters['server'], parameters['port'])
 
             self._manager = weakref.proxy(manager)
-            #self._msn_client = papyon.Client(server, proxies)
             self._account = (parameters['account'], parameters['password'])
             self._server = (parameters['server'], parameters['port'])
 
@@ -195,6 +191,7 @@ class GaduConnection(telepathy.server.Connection,
 #                        self.profile.addContact( c )
 #                if i == 0:
 #                    self.profile.addContact( c )
+                print str(contact_from_list)
                 c = GaduContact.from_xml(contact_from_list)
                 try:
                     c.uin
@@ -202,7 +199,7 @@ class GaduConnection(telepathy.server.Connection,
                 except:
                     pass
 
-            print 'We have '+str(self.configfile.get_contacts_count())+' contacts in file.'
+            logger.info("We have %s contacts in file." % (self.configfile.get_contacts_count()))
                 
 
             self.factory = GaduClientFactory(self.profile)
@@ -261,7 +258,6 @@ class GaduConnection(telepathy.server.Connection,
         self.StatusChanged(telepathy.CONNECTION_STATUS_DISCONNECTED,
                 telepathy.CONNECTION_STATUS_REASON_REQUESTED)
         reactor.stop()
-        #self._msn_client.logout()
 
     def RequestHandles(self, handle_type, names, sender):
         self.check_connected()
@@ -286,11 +282,22 @@ class GaduConnection(telepathy.server.Connection,
                 #else:
                 #    handle = GaduHandleFactory(self, 'contact',
                 #            contact_name, network_id)
-
-                contact = self.profile.get_contact(int(contact_name))
-
-                handle = GaduHandleFactory(self, 'contact',
-                            contact.uin, None)
+                #print contact_name
+                #contact = self.profile.get_contact(int(contact_name))
+                #print str(contact)
+                try:
+                    #just check is contact_name is integer
+                    stripped = str(int(source))
+                except:
+                    if self.profile.isContactExist(contact_name) == False:
+                        contact_pseudo_xmled = ET.fromstring("""<Contact><Guid>%s</Guid><GGNumber>%s</GGNumber><ShowName>%s</ShowName></Contact>""" % (str(contact_name), str(contact_name), str(contact_name)))
+                        c = GaduContact.from_xml(contact_pseudo_xmled)
+                        self.profile.addContact( c )
+                        self.profile.notifyAboutContact( c )
+                    print "contact name: %s" % (contact_name)
+                    handle = GaduHandleFactory(self, 'contact',
+                                str(contact_name), None)
+                
             elif handle_type == telepathy.HANDLE_TYPE_LIST:
                 handle = GaduHandleFactory(self, 'list', name)
             elif handle_type == telepathy.HANDLE_TYPE_GROUP:
@@ -341,6 +348,7 @@ class GaduConnection(telepathy.server.Connection,
         reactor.callLater(5, self.updateContactsFile)
 
     def makeTelepathyContactsChannel(self):
+        logger.debug("Method makeTelepathyContactsChannel called.")
         handle = GaduHandleFactory(self, 'list', 'subscribe')
         props = self._generate_props(telepathy.CHANNEL_TYPE_CONTACT_LIST,
             handle, False)
@@ -353,12 +361,16 @@ class GaduConnection(telepathy.server.Connection,
            
     def on_contactsImported(self):
         #TODO: that contacts should be written into XML file with contacts. I need to write it :)
-        logger.info("Contacts imported.")
+        logger.info("No contacts in the XML contacts file yet. Contacts imported.")
 
         self.configfile.make_contacts_file(None, self.profile.contacts)
         reactor.callLater(5, self.updateContactsFile)
 
         self.makeTelepathyContactsChannel()
+
+        self._status = telepathy.CONNECTION_STATUS_CONNECTED
+        self.StatusChanged(telepathy.CONNECTION_STATUS_CONNECTED,
+                telepathy.CONNECTION_STATUS_REASON_REQUESTED)
 
     def on_loginSuccess(self):
         logger.info("Connected")
@@ -372,9 +384,9 @@ class GaduConnection(telepathy.server.Connection,
 
             self.makeTelepathyContactsChannel()
 
-        self._status = telepathy.CONNECTION_STATUS_CONNECTED
-        self.StatusChanged(telepathy.CONNECTION_STATUS_CONNECTED,
-                telepathy.CONNECTION_STATUS_REASON_REQUESTED)
+            self._status = telepathy.CONNECTION_STATUS_CONNECTED
+            self.StatusChanged(telepathy.CONNECTION_STATUS_CONNECTED,
+                    telepathy.CONNECTION_STATUS_REASON_REQUESTED)
 
     def on_loginFailed(self):
         logger.info("Method on_loginFailed called.")
@@ -384,7 +396,6 @@ class GaduConnection(telepathy.server.Connection,
         reactor.stop()
 
     def on_updateContact(self, contact):
-        print "updateContact contact: "+repr(contact.uin)
         handle = GaduHandleFactory(self, 'contact',
             contact.uin, None)
         self._presence_changed(handle, contact.status, contact.description)
@@ -404,7 +415,7 @@ class GaduConnection(telepathy.server.Connection,
         channel.Received(self._recv_id, timestamp, handle, type, 0, "%s" % (msg.content.plain_message.rstrip('\0')))
         self._recv_id += 1
 
-        print "Msg from %r %d %d [%r] [%r]" % (msg.sender, msg.content.offset_plain, msg.content.offset_attrs, msg.content.plain_message, msg.content.html_message)
+        logger.info("Msg from %r %d %d [%r] [%r]" % (msg.sender, msg.content.offset_plain, msg.content.offset_attrs, msg.content.plain_message, msg.content.html_message))
         #self.config.profile.sendTo(msg.sender, msg.content.plain_message)
 
 

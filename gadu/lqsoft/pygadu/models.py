@@ -67,6 +67,10 @@ class GaduProfile(object):
         if self.connected:
             self.setNotifyState(contact.uin, contact.notify_flags)
 
+    def notifyAboutContact(self, contact):
+        """Notify GG server when new GG contact is added to the contacts list."""
+        self.__connection.addNewContact(contact)
+
     def addGroup(self, group):
         if self.__groups.has_key(group.Id):
             raise ValueError("Group %d already exists." % group.Id)
