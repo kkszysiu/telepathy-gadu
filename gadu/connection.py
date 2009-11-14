@@ -285,18 +285,24 @@ class GaduConnection(telepathy.server.Connection,
                 #print contact_name
                 #contact = self.profile.get_contact(int(contact_name))
                 #print str(contact)
-                try:
-                    #just check is contact_name is integer
-                    stripped = str(int(source))
-                except:
-                    if self.profile.isContactExist(contact_name) == False:
-                        contact_pseudo_xmled = ET.fromstring("""<Contact><Guid>%s</Guid><GGNumber>%s</GGNumber><ShowName>%s</ShowName></Contact>""" % (str(contact_name), str(contact_name), str(contact_name)))
-                        c = GaduContact.from_xml(contact_pseudo_xmled)
-                        self.profile.addContact( c )
-                        self.profile.notifyAboutContact( c )
-                    print "contact name: %s" % (contact_name)
-                    handle = GaduHandleFactory(self, 'contact',
-                                str(contact_name), None)
+
+
+
+                
+#                try:
+#                    #just check is contact_name is integer
+#                    stripped = str(int(source))
+#                except:
+#                    if self.profile.isContactExist(contact_name) == False:
+#                        contact_pseudo_xmled = ET.fromstring("""<Contact><Guid>%s</Guid><GGNumber>%s</GGNumber><ShowName>%s</ShowName></Contact>""" % (str(contact_name), str(contact_name), str(contact_name)))
+#                        c = GaduContact.from_xml(contact_pseudo_xmled)
+#                        self.profile.addContact( c )
+#                        self.profile.notifyAboutContact( c )
+#                    print "contact name: %s" % (contact_name)
+#                    handle = GaduHandleFactory(self, 'contact',
+#                                str(contact_name), None)
+#
+#
                 
             elif handle_type == telepathy.HANDLE_TYPE_LIST:
                 handle = GaduHandleFactory(self, 'list', name)
@@ -411,7 +417,6 @@ class GaduConnection(telepathy.server.Connection,
                 handle, False)
         channel = self._channel_manager.channel_for_props(props,
                 signal=True, conversation=None)
-        print str(msg.content.plain_message.strip())
         channel.Received(self._recv_id, timestamp, handle, type, 0, "%s" % (msg.content.plain_message.rstrip('\0')))
         self._recv_id += 1
 
