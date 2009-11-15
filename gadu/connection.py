@@ -244,6 +244,25 @@ class GaduConnection(telepathy.server.Connection,
         self.check_handle(handle_type, handle_id)
         return self._handles[handle_type, handle_id]
 
+    def get_handle_id_by_name(self, handle_type, name):
+        """Returns a handle ID for the given type and name
+
+        Arguments:
+        handle_type -- Telepathy Handle_Type for all the handles
+        name -- username for the contact
+
+        Returns:
+        handle_id -- ID for the given username
+        """
+
+        handle_id = 0
+        for handle in self._handles.values():
+            if handle.get_name() == name:
+                handle_id = handle.get_id()
+                break
+
+        return handle_id
+
     def Connect(self):
         if self._status == telepathy.CONNECTION_STATUS_DISCONNECTED:
             logger.info("Connecting")
@@ -260,6 +279,7 @@ class GaduConnection(telepathy.server.Connection,
         reactor.stop()
 
     def RequestHandles(self, handle_type, names, sender):
+        logger.info("Method RequestHandles called, handle type: %s, names: %s" % (str(handle_type), str(names)))
         self.check_connected()
         self.check_handle_type(handle_type)
 
@@ -267,6 +287,9 @@ class GaduConnection(telepathy.server.Connection,
         for name in names:
             if handle_type == telepathy.HANDLE_TYPE_CONTACT:
                 contact_name = name
+
+                handle = GaduHandleFactory(self, 'contact',
+                        contact_name, None)
                 #if len(name) > 1:
                 #    network_id = int(name[1])
                 #else:
@@ -407,21 +430,27 @@ class GaduConnection(telepathy.server.Connection,
         self._presence_changed(handle, contact.status, contact.description)
 
     def on_messageReceived(self, msg):
-        handle = GaduHandleFactory(self, 'contact',
-                str(msg.sender), None)
+        handle_id = self.get_handle_id_by_name(telepathy.constants.HANDLE_TYPE_CONTACT,
+                                  str(msg.sender))
+        if handle_id != 0:
+            handle = self.handle(telepathy.constants.HANDLE_TYPE_CONTACT, handle_id)
+        else:
+            handle = GaduHandleFactory(self, 'contact',
+                    str(msg.sender), None)
+                
         timestamp = int(time.time())
         type = telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL
-        logger.info("User %r sent a message" % handle)
+        logger.info("User %s sent a message" % handle.name)
+
+        logger.info("Msg from %r %d %d [%r] [%r]" % (msg.sender, msg.content.offset_plain, msg.content.offset_attrs, msg.content.plain_message, msg.content.html_message))
 
         props = self._generate_props(telepathy.CHANNEL_TYPE_TEXT,
                 handle, False)
         channel = self._channel_manager.channel_for_props(props,
                 signal=True, conversation=None)
-        channel.Received(self._recv_id, timestamp, handle, type, 0, "%s" % (msg.content.plain_message.rstrip('\0')))
+        message = "%s" % unicode(str(msg.content.plain_message).replace('\x00', '').decode('windows-1250').encode('utf-8'))
+        channel.Received(self._recv_id, timestamp, handle, type, 0, message)
         self._recv_id += 1
-
-        logger.info("Msg from %r %d %d [%r] [%r]" % (msg.sender, msg.content.offset_plain, msg.content.offset_attrs, msg.content.plain_message, msg.content.html_message))
-        #self.config.profile.sendTo(msg.sender, msg.content.plain_message)
 
 
     # papyon.event.ClientEventInterface

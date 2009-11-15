@@ -153,8 +153,6 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
         if status == GaduPresenceMapping.OFFLINE:
             self.Disconnect()
 
-        print "SetStatus emitted"
-
         presence = GaduPresenceMapping.to_gg[status]
         message = arguments.get('message', u'')
 
@@ -192,7 +190,6 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
             except AttributeError:
                 #I dont know what to do here. Do I really need this? :P
                 contact = handle.contact
-                print "get_simple_presences, contact uin: %s, status: %s, desc: %s" % (contact.uin, contact.status, contact.description)
                 if contact is not None:
                     presence = GaduPresenceMapping.to_telepathy[contact.status]
                     personal_message = unicode(contact.description, "utf-8")
@@ -246,7 +243,6 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
             except AttributeError:
                 #I dont know what to do here. Do I really need this? :P
                 contact = handle.contact
-                print "get_simple_presences, contact uin: %s, status: %x, desc: %s" % (contact.uin, contact.status, contact.description)
                 if contact is not None:
                     #print "Contact status: %s" % (contact.status)
                     presence = GaduPresenceMapping.from_gg_to_tp[contact.status]

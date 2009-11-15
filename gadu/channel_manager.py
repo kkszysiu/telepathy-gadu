@@ -69,8 +69,7 @@ class GaduChannelManager(telepathy.server.ChannelManager):
         if handle.get_type() != telepathy.HANDLE_TYPE_CONTACT:
             raise telepathy.NotImplemented('Only contacts are allowed')
 
-
-        logger.debug('New text channel')
+        logger.debug('New text channel for handle, name: %s, id: %s, type: %s' % (handle.name, handle.id, handle.type))
 
         channel = GaduTextChannel(self._conn, self, conversation, props)
         return channel
