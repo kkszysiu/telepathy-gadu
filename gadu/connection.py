@@ -72,8 +72,8 @@ class GaduConfig(object):
         return self.roster
 
     def make_contacts_file(self, groups, contacts):
-        start = """<?xml version='1.0'?><config>"""
-        end = """</config>"""
+        start = """<?xml version='1.0'?>\n<config>"""
+        end = """\n</config>\n"""
 
         new_groups = """"""
         new_contacts = """"""
@@ -86,14 +86,14 @@ class GaduConfig(object):
         #    groups_i = groups_i+1
         #    group += """<Contact><Guid>5120225</Guid><GGNumber>5120225</GGNumber><ShowName>moj numer</ShowName></Contact>"""
         if groups_i == 0:
-            new_groups = """<Groups />"""
+            new_groups = """\n<Groups />\n"""
 
         for contact in contacts:
             #TODO: nie wiem co tu ma byc bo nie wiem jak wyglada struktura grup... jeszcze :P
             contacts_i = contacts_i+1
             if contacts_i == 1:
                 new_contacts = """<Contacts>"""
-            new_contacts += """<Contact><Guid>%s</Guid><GGNumber>%s</GGNumber><ShowName>%s</ShowName></Contact>""" % (contact.uin, contact.uin, contact.ShowName)
+            new_contacts += """\n<Contact><Guid>%s</Guid><GGNumber>%s</GGNumber><ShowName>%s</ShowName></Contact>\n""" % (contact.uin, contact.uin, contact.ShowName)
         if contacts_i == 0:
             new_contacts = """<Contacts />"""
         else:
@@ -191,7 +191,6 @@ class GaduConnection(telepathy.server.Connection,
 #                        self.profile.addContact( c )
 #                if i == 0:
 #                    self.profile.addContact( c )
-                print str(contact_from_list)
                 c = GaduContact.from_xml(contact_from_list)
                 try:
                     c.uin
@@ -290,6 +289,17 @@ class GaduConnection(telepathy.server.Connection,
 
                 handle = GaduHandleFactory(self, 'contact',
                         contact_name, None)
+
+#                try:
+#                    #just check is contact_name is integer
+#                    stripped = str(int(contact_name))
+#                except:
+#                    if self.profile.isContactExist(contact_name) == False:
+#                        contact_pseudo_xmled = ET.fromstring("""<Contact><Guid>%s</Guid><GGNumber>%s</GGNumber><ShowName>%s</ShowName></Contact>""" % (str(contact_name), str(contact_name), str(contact_name)))
+#                        c = GaduContact.from_xml(contact_pseudo_xmled)
+#                        #self.profile.addContact( c )
+#                        self.profile.addNewContact( c )
+#                        self.profile.notifyAboutContact( c )
                 #if len(name) > 1:
                 #    network_id = int(name[1])
                 #else:
@@ -312,15 +322,7 @@ class GaduConnection(telepathy.server.Connection,
 
 
                 
-#                try:
-#                    #just check is contact_name is integer
-#                    stripped = str(int(source))
-#                except:
-#                    if self.profile.isContactExist(contact_name) == False:
-#                        contact_pseudo_xmled = ET.fromstring("""<Contact><Guid>%s</Guid><GGNumber>%s</GGNumber><ShowName>%s</ShowName></Contact>""" % (str(contact_name), str(contact_name), str(contact_name)))
-#                        c = GaduContact.from_xml(contact_pseudo_xmled)
-#                        self.profile.addContact( c )
-#                        self.profile.notifyAboutContact( c )
+
 #                    print "contact name: %s" % (contact_name)
 #                    handle = GaduHandleFactory(self, 'contact',
 #                                str(contact_name), None)
@@ -369,6 +371,26 @@ class GaduConnection(telepathy.server.Connection,
 
         _success(channel._object_path)
         self.signal_new_channels([channel])
+
+
+    def get_handle_id_by_name(self, handle_type, name):
+        """Returns a handle ID for the given type and name
+
+        Arguments:
+        handle_type -- Telepathy Handle_Type for all the handles
+        name -- username for the contact
+
+        Returns:
+        handle_id -- ID for the given username
+        """
+
+        handle_id = 0
+        for handle in self._handles.values():
+            if handle.get_name() == name:
+                handle_id = handle.get_id()
+                break
+
+        return handle_id
 
 
     def updateContactsFile(self):
@@ -425,8 +447,11 @@ class GaduConnection(telepathy.server.Connection,
         reactor.stop()
 
     def on_updateContact(self, contact):
-        handle = GaduHandleFactory(self, 'contact',
-            contact.uin, None)
+        #handle = GaduHandleFactory(self, 'contact',
+        #    contact.uin, None)
+        handle_id = self.get_handle_id_by_name(telepathy.constants.HANDLE_TYPE_CONTACT, str(contact.uin))
+        handle = self.handle(telepathy.constants.HANDLE_TYPE_CONTACT, handle_id)
+        logger.info("Method on_updateContact called. Status changed for UIN: %s, handle_id: %s, contact_status: %s, contact_description: %s" % (contact.uin, handle.id, contact.status, contact.description))
         self._presence_changed(handle, contact.status, contact.description)
 
     def on_messageReceived(self, msg):

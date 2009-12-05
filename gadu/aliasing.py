@@ -59,11 +59,13 @@ class GaduAliasing(telepathy.server.ConnectionInterfaceAliasing):
 
                 if alias == handle.name:
                     alias = u""
-                contact = handle.contact
 
                 new_alias = alias.encode("utf-8")
 
-                handle.contact.updateName(new_alias)
+                try:
+                    handle.contact.updateName(new_alias)
+                except:
+                    pass
                 
                 #alias = unicode(alias, 'utf-8')
                 logger.info("Contact %s alias changed to '%s'" % (unicode(handle.name), alias))
