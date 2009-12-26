@@ -91,7 +91,15 @@ class GaduPresenceMapping(object):
             0x0021:                     IDLE,
             0x4022:                     IDLE,
             0x0014:                     INVISIBLE,
-            0x4016:                     INVISIBLE
+            0x4016:                     INVISIBLE,
+            #Opisy graficzne
+            #Z tego co mi sie wydaje one zawsze maja maske "z opisem"
+            0x4115:                     OFFLINE,
+            0x4118:                     ONLINE,
+            0x4104:                     ONLINE,
+            0x4105:                     BUSY,
+            0x4122:                     IDLE,
+            0x4116:                     INVISIBLE
     }
 
     to_presence_type = {
@@ -310,7 +318,7 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
         try:
             presence = GaduPresenceMapping.from_gg_to_tp[presence]
         except KeyError:
-            presence = GaduPresenceMapping.from_gg_to_tp[presence]
+            presence = GaduPresenceMapping.from_gg_to_tp[0]
         presence_type = GaduPresenceMapping.to_presence_type[presence]
         personal_message = unicode(str(personal_message.text), "utf-8")
 
