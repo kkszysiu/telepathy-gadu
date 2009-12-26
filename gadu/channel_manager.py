@@ -21,10 +21,9 @@ import weakref
 
 import dbus
 import telepathy
-#import papyon
 
 from gadu.channel.contact_list import GaduContactListChannelFactory
-#from butterfly.channel.group import ButterflyGroupChannel
+from gadu.channel.group import GaduGroupChannel
 from gadu.channel.text import GaduTextChannel
 #from butterfly.channel.media import ButterflyMediaChannel
 from gadu.handle import GaduHandleFactory

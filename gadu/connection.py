@@ -7,15 +7,13 @@ import logging
 import xml.etree.ElementTree as ET
 
 from gadu.lqsoft.pygadu.twisted_protocol import GaduClient
-from gadu.lqsoft.pygadu.models import GaduProfile, GaduContact
+from gadu.lqsoft.pygadu.models import GaduProfile, GaduContact, GaduContactGroup
 
 from twisted.internet import reactor, protocol
 from twisted.python import log
 
 import dbus
 import telepathy
-#import papyon
-#import papyon.event
 
 from gadu.presence import GaduPresence
 from gadu.aliasing import GaduAliasing
@@ -107,28 +105,29 @@ class GaduConfig(object):
     def get_contacts_count(self):
         return self.contacts_count
 
-class GaduClientFactory(protocol.ClientFactory, protocol.ReconnectingClientFactory):
+#class GaduClientFactory(protocol.ClientFactory, protocol.ReconnectingClientFactory):
+class GaduClientFactory(protocol.ClientFactory):
     def __init__(self, config):
         self.config = config
 
     def buildProtocol(self, addr):
         # connect using current selected profile
-        self.resetDelay()
+        #self.resetDelay()
         return GaduClient(self.config)
 
     def startedConnecting(self, connector):
         logger.info('Started to connect.')
 
     def clientConnectionLost(self, connector, reason):
-        logger.info('Lost connection.  Reason:', reason)
-        protocol.ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
-    #    connector.connect()
-        #reactor.stop()
+        logger.info('Lost connection.  Reason: %s' % (reason))
+        #protocol.ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
+        #connector.connect()
+        reactor.stop()
 
     def clientConnectionFailed(self, connector, reason):
-        logger.info('Connection failed. Reason:', reason)
-        protocol.ReconnectingClientFactory.clientConnectionFailed(self, connector, reason)
-        ##reactor.stop()
+        logger.info('Connection failed. Reason: %s' % (reason))
+        #protocol.ReconnectingClientFactory.clientConnectionFailed(self, connector, reason)
+        reactor.stop()
 
 class GaduConnection(telepathy.server.Connection,
         telepathy.server.ConnectionInterfaceRequests,
@@ -186,7 +185,12 @@ class GaduConnection(telepathy.server.Connection,
                     self.profile.addContact( c )
                 except:
                     pass
-
+                
+            for group_from_list in contacts_list['groups']:
+                g = GaduContactGroup.from_xml(group_from_list)
+                if g.Name:
+                    self.profile.addGroup(g)
+            
             logger.info("We have %s contacts in file." % (self.configfile.get_contacts_count()))
                 
 
@@ -338,7 +342,6 @@ class GaduConnection(telepathy.server.Connection,
 
         return props
 
-
     @dbus.service.method(telepathy.CONNECTION, in_signature='suub',
         out_signature='o', async_callbacks=('_success', '_error'))
     def RequestChannel(self, type, handle_type, handle_id, suppress_handler,
@@ -369,7 +372,6 @@ class GaduConnection(telepathy.server.Connection,
         Returns:
         handle_id -- ID for the given username
         """
-
         handle_id = 0
         for handle in self._handles.values():
             if handle.get_name() == name:
@@ -377,7 +379,6 @@ class GaduConnection(telepathy.server.Connection,
                 break
 
         return handle_id
-
 
     def updateContactsFile(self):
         """Method that updates contact file when it changes and in loop every 5 seconds."""
@@ -395,7 +396,17 @@ class GaduConnection(telepathy.server.Connection,
 #        props = self._generate_props(telepathy.CHANNEL_TYPE_CONTACT_LIST,
 #            handle, False)
 #        self._channel_manager.channel_for_props(props, signal=True)
-           
+
+    def makeTelepathyGroupChannels(self):
+        logger.debug("Method makeTelepathyGroupChannels called.")
+        for group in self.profile.groups:
+            handle = GaduHandleFactory(self, 'group',
+                    group.Name)
+            props = self._generate_props(
+                telepathy.CHANNEL_TYPE_CONTACT_LIST, handle, False)
+            self._channel_manager.channel_for_props(props, signal=True)
+
+
     def on_contactsImported(self):
         #TODO: that contacts should be written into XML file with contacts. I need to write it :)
         logger.info("No contacts in the XML contacts file yet. Contacts imported.")
@@ -404,7 +415,8 @@ class GaduConnection(telepathy.server.Connection,
         reactor.callLater(5, self.updateContactsFile)
 
         self.makeTelepathyContactsChannel()
-
+        self.makeTelepathyGroupChannels()
+        
         self._status = telepathy.CONNECTION_STATUS_CONNECTED
         self.StatusChanged(telepathy.CONNECTION_STATUS_CONNECTED,
                 telepathy.CONNECTION_STATUS_REASON_REQUESTED)
@@ -420,6 +432,7 @@ class GaduConnection(telepathy.server.Connection,
             reactor.callLater(5, self.updateContactsFile)
 
             self.makeTelepathyContactsChannel()
+            #self.makeTelepathyGroupChannels()
 
             self._status = telepathy.CONNECTION_STATUS_CONNECTED
             self.StatusChanged(telepathy.CONNECTION_STATUS_CONNECTED,
@@ -433,11 +446,9 @@ class GaduConnection(telepathy.server.Connection,
         reactor.stop()
 
     def on_updateContact(self, contact):
-        #handle = GaduHandleFactory(self, 'contact',
-        #    contact.uin, None)
         handle_id = self.get_handle_id_by_name(telepathy.constants.HANDLE_TYPE_CONTACT, str(contact.uin))
         handle = self.handle(telepathy.constants.HANDLE_TYPE_CONTACT, handle_id)
-        logger.info("Method on_updateContact called. Status changed for UIN: %s, handle_id: %s, contact_status: %s, contact_description: %s" % (contact.uin, handle.id, contact.status, contact.description))
+        logger.info("Method on_updateContact called, status changed for UIN: %s, id: %s, status: %s, description: %s" % (contact.uin, handle.id, contact.status, contact.description))
         self._presence_changed(handle, contact.status, contact.get_desc())
 
     def on_messageReceived(self, msg):

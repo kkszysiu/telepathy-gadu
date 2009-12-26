@@ -20,7 +20,6 @@ import logging
 import weakref
 
 import telepathy
-#import papyon
 
 __all__ = ['GaduHandleFactory']
 
@@ -120,13 +119,12 @@ class GaduGroupHandle(GaduHandle):
     def __init__(self, connection, id, group_name):
         handle_type = telepathy.HANDLE_TYPE_GROUP
         handle_name = group_name
+        self._connection = connection
         GaduHandle.__init__(self, connection, id, handle_type, handle_name)
 
     @property
     def group(self):
-        for group in self._conn.msn_client.address_book.groups:
-            # Microsoft seems to like case insensitive stuff
-            if group.name.decode("utf-8").lower() == self.name.lower():
+        for group in self._connection.gadu_client.groups:
+            if group.Name == handle_name:
                 return group
         return None
-
