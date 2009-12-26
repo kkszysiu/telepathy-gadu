@@ -46,11 +46,10 @@ class GaduConfig(object):
             pass
         else:
             config_file = open(os.path.join(path, 'profile.xml'), 'wb+')
-            config_file.write("""<?xml version='1.0'?>
-            <config>
+            config_file.write("""<ContactBook>
                 <Groups />
                 <Contacts />
-            </config>""");
+            </ContactBook>""");
             config_file.close()
         self.path = os.path.join(path, 'profile.xml')
         return os.path.join(path, 'profile.xml')
@@ -102,44 +101,6 @@ class GaduConfig(object):
 
         #ET.dump(contactbook_xml)
         xml_file = ET.tostring(contactbook_xml)
-        
-#        start = """<?xml version='1.0'?>\n<config>"""
-#        end = """\n</config>\n"""
-#
-#        new_groups = """"""
-#        new_contacts = """"""
-#
-#        groups_i = 0
-#        contacts_i = 0
-#
-#
-##        for group in groups:
-##            #TODO: nie wiem co tu ma byc bo nie wiem jak wyglada struktura grup... jeszcze :P
-##            groups_i = groups_i+1
-##            if groups_i == 1:
-##                new_groups = """<Groups>"""
-##            new_groups += """<Group><Id>00000000-0000-0000-0000-000000000000</Id><Name>Pozostale</Name><IsExpanded>true</IsExpanded><IsRemovable>false</IsRemovable></Group>"""
-##        if groups_i == 0:
-##            new_groups = """<Groups />"""
-##        else:
-##            new_groups += """</Groups>"""
-#
-#        new_groups = """<Groups />"""
-#
-#        for contact in contacts:
-#            #TODO: nie wiem co tu ma byc bo nie wiem jak wyglada struktura grup... jeszcze :P
-#            contacts_i = contacts_i+1
-#            if contacts_i == 1:
-#                new_contacts = """<Contacts>"""
-#            new_contacts += """\n<Contact><Guid>%s</Guid><GGNumber>%s</GGNumber><ShowName>%s</ShowName><Groups><GroupId>7ad8dc13-37a7-41eb-9ef1-7bf93dc8dab6</GroupId></Groups></Contact>\n""" % (contact.uin, contact.uin, contact.ShowName)
-#        if contacts_i == 0:
-#            new_contacts = """<Contacts />"""
-#        else:
-#            new_contacts += """</Contacts>"""
-#
-#
-#        #lets split all togheter
-#        xml_file = start+new_groups+new_contacts+end
 
         #and save that
         config_file = open(self.path, 'wb+')
@@ -221,14 +182,6 @@ class GaduConnection(telepathy.server.Connection,
             contacts_list = self.configfile.get_contacts()
 
             for contact_from_list in contacts_list['contacts']:
-#                c = GaduContact.from_xml(contact_from_list)
-#                i = 0
-#                for contact in self.profile.contacts:
-#                    i = i+1
-#                    if contact.uin != c.uin:
-#                        self.profile.addContact( c )
-#                if i == 0:
-#                    self.profile.addContact( c )
                 c = GaduContact.from_xml(contact_from_list)
                 try:
                     c.uin
@@ -251,9 +204,6 @@ class GaduConnection(telepathy.server.Connection,
 #            ButterflyAvatars.__init__(self)
             GaduCapabilities.__init__(self)
             GaduContacts.__init__(self)
-#            papyon.event.ClientEventInterface.__init__(self, self._msn_client)
-#            papyon.event.InviteEventInterface.__init__(self, self._msn_client)
-#            papyon.event.OfflineMessagesEventInterface.__init__(self, self._msn_client)
 
 
             self.set_self_handle(GaduHandleFactory(self, 'self'))
@@ -490,7 +440,7 @@ class GaduConnection(telepathy.server.Connection,
         handle_id = self.get_handle_id_by_name(telepathy.constants.HANDLE_TYPE_CONTACT, str(contact.uin))
         handle = self.handle(telepathy.constants.HANDLE_TYPE_CONTACT, handle_id)
         logger.info("Method on_updateContact called. Status changed for UIN: %s, handle_id: %s, contact_status: %s, contact_description: %s" % (contact.uin, handle.id, contact.status, contact.description))
-        self._presence_changed(handle, contact.status, contact.description)
+        self._presence_changed(handle, contact.status, contact.get_desc())
 
     def on_messageReceived(self, msg):
         handle_id = self.get_handle_id_by_name(telepathy.constants.HANDLE_TYPE_CONTACT,

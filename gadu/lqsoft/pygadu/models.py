@@ -270,7 +270,7 @@ class GaduContact(FlatXMLObject):
 
     def get_desc(self):
         try:
-            return self.description.text
+            return self.description.text if self.description.text is not None else self.description
         except:
             return ''
 

@@ -320,7 +320,7 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
         except KeyError:
             presence = GaduPresenceMapping.from_gg_to_tp[0]
         presence_type = GaduPresenceMapping.to_presence_type[presence]
-        personal_message = unicode(str(personal_message.text), "utf-8")
+        personal_message = unicode(str(personal_message), "utf-8")
 
         self.PresencesChanged({handle: (presence_type, presence, personal_message)})
 
