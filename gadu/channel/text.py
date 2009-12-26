@@ -22,8 +22,6 @@ import weakref
 import time
 
 import telepathy
-#import papyon
-#import papyon.event
 
 from gadu.util.decorator import async
 from gadu.handle import GaduHandleFactory
@@ -48,7 +46,7 @@ class GaduTextChannel(telepathy.server.ChannelTypeText):
     def Send(self, message_type, text):
         if message_type == telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
             logger.info("Sending message : %s" % unicode(text))
-            self.conn.gadu_client.sendTo(int(self.contact.uin), str(text))
+            self.conn.gadu_client.sendTo(int(self.contact.uin), str(text+str('\x00')))
         else:
             raise telepathy.NotImplemented("Unhandled message type")
         self.Sent(int(time.time()), message_type, text)
