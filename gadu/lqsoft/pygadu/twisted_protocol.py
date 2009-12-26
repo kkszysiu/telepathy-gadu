@@ -137,7 +137,8 @@ class GaduClient(Protocol):
         print "MSG_Status=%x, recipient=%d, seq=%d" % (msg.msg_status, msg.recipient, msg.seq) 
 
     def _handleDisconnectPacket(self, msg):
-         Protocol.connectionLost(self, 'Disconnect packet received')
+         Protocol.connectionLost(self, None)
+         #self.loseConnection()
 
     def _sendAllContacts(self, result, *args, **kwargs):
         contacts = list( self.user_profile.contacts )
