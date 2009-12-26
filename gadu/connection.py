@@ -92,12 +92,9 @@ class GaduConfig(object):
             ET.SubElement(contact_xml, "ShowName").text = contact.ShowName
             contact_groups_xml = ET.SubElement(contact_xml, "Groups")
             contact_groups = ET.fromstring(contact.Groups)
-            for group in contact_groups.getchildren():
-                ET.SubElement(contact_groups_xml, "GroupId").text = group.text
-            #ET.SubElement(contact_xml, "Groups").text = contact.Groups
-            #contact_groups_xml = ET.SubElement(contact_xml, "Groups")
-            #ET.SubElement(contact_groups_xml, "ShowName").text = contact.ShowName
-            #ET.SubElement(contact_groups_xml, "GroupId").text = contact.GroupId
+            if contact.Groups:
+                for group in contact_groups.getchildren():
+                    ET.SubElement(contact_groups_xml, "GroupId").text = group.text
 
         #ET.dump(contactbook_xml)
         xml_file = ET.tostring(contactbook_xml)
@@ -110,27 +107,28 @@ class GaduConfig(object):
     def get_contacts_count(self):
         return self.contacts_count
 
-class GaduClientFactory(protocol.ClientFactory):
+class GaduClientFactory(protocol.ClientFactory, protocol.ReconnectingClientFactory):
     def __init__(self, config):
         self.config = config
 
     def buildProtocol(self, addr):
         # connect using current selected profile
+        self.resetDelay()
         return GaduClient(self.config)
 
     def startedConnecting(self, connector):
-        print 'Started to connect.'
+        logger.info('Started to connect.')
 
     def clientConnectionLost(self, connector, reason):
-        print 'Lost connection.  Reason:', reason
-    #    protocol.ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
+        logger.info('Lost connection.  Reason:', reason)
+        protocol.ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
     #    connector.connect()
-        reactor.stop()
+        #reactor.stop()
 
     def clientConnectionFailed(self, connector, reason):
-        print 'Connection failed. Reason:', reason
-    #    protocol.ReconnectingClientFactory.clientConnectionFailed(self, connector, reason)
-        reactor.stop()
+        logger.info('Connection failed. Reason:', reason)
+        protocol.ReconnectingClientFactory.clientConnectionFailed(self, connector, reason)
+        ##reactor.stop()
 
 class GaduConnection(telepathy.server.Connection,
         telepathy.server.ConnectionInterfaceRequests,
@@ -565,39 +563,5 @@ class GaduConnection(telepathy.server.Connection,
         channel = self._channel_manager.channel_for_props(props,
                 signal=True, call=call)
 
-    # papyon.event.InviteEventInterface
-    def on_invite_webcam(self, session, producer):
-        direction = (producer and "send") or "receive"
-        logger.debug("Invitation to %s webcam" % direction)
-
-        handle = ButterflyHandleFactory(self, 'contact', session.peer.account,
-                session.peer.network_id)
-        props = self._generate_props(telepathy.CHANNEL_TYPE_STREAMED_MEDIA,
-                handle, False, initiator_handle=handle)
-        channel = self._channel_manager.channel_for_props(props, signal=True,
-                call=session)
-
-    # papyon.event.OfflineMessagesEventInterface
-    def on_oim_messages_received(self, messages):
-        # We got notified we received some offlines messages so we
-        #are going to fetch them
-        self.msn_client.oim_box.fetch_messages(messages)
-
-    # papyon.event.OfflineMessagesEventInterface
-    def on_oim_messages_fetched(self, messages):
-        for message in messages:
-            # Request butterfly text channel (creation, what happen when it exist)
-            sender = message.sender
-            logger.info('received offline message from %s : %s' % (sender.account, message.text))
-            handle = ButterflyHandleFactory(self, 'contact',
-                    sender.account, sender.network_id)
-            props = self._generate_props(telepathy.CHANNEL_TYPE_TEXT,
-                handle, False)
-            channel = self._channel_manager.channel_for_props(props,
-                signal=True)
-            # Notify it of the message
-            channel.offline_message_received(message)
-
     def _advertise_disconnected(self):
         self._manager.disconnected(self)
-

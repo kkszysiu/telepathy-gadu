@@ -20,8 +20,6 @@
 import logging
 
 import telepathy
-#import papyon
-#import papyon.event
 
 from gadu.util.decorator import async
 from gadu.handle import GaduHandleFactory
@@ -38,17 +36,8 @@ class GaduGroupChannel(GaduListChannel):
         self.__pending_add = []
         self.__pending_remove = []
         ButterflyListChannel.__init__(self, connection, manager, props)
-        papyon.event.AddressBookEventInterface.__init__(self, connection.msn_client)
         self.GroupFlagsChanged(telepathy.CHANNEL_GROUP_FLAG_CAN_ADD | 
                 telepathy.CHANNEL_GROUP_FLAG_CAN_REMOVE, 0)
-        # Create this group on the server if not existant
-        # FIXME: Move the server-side group creation into the GroupHandle.__init__
-        @async
-        def create_group():
-            if self._handle.group is None:
-                name = self._handle.name.encode("utf-8")
-                connection.msn_client.address_book.add_group(name)
-        create_group()
 
     def AddMembers(self, contacts, message):
         ab = self._conn.msn_client.address_book

@@ -26,7 +26,6 @@ import dbus
 import telepathy
 import telepathy.constants
 import telepathy.errors
-#import papyon
 
 from gadu.handle import GaduHandleFactory
 from gadu.util.decorator import async
@@ -117,8 +116,6 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
     def __init__(self):
         telepathy.server.ConnectionInterfacePresence.__init__(self)
         telepathy.server.ConnectionInterfaceSimplePresence.__init__(self)
-#        papyon.event.ContactEventInterface.__init__(self, self.msn_client)
-#        papyon.event.ProfileEventInterface.__init__(self, self.msn_client)
 
         dbus_interface = 'org.freedesktop.Telepathy.Connection.Interface.SimplePresence'
 
@@ -222,8 +219,6 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
         if status == GaduPresenceMapping.OFFLINE:
             self.Disconnect()
 
-        print "SetStatus status: %s" % (status)
-
         try:
             presence = GaduPresenceMapping.to_gg[status]
         except KeyError:
@@ -252,7 +247,6 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
                 #I dont know what to do here. Do I really need this? :P
                 contact = handle.contact
                 if contact is not None:
-                    #print "Contact status: %s" % (contact.status)
                     presence = GaduPresenceMapping.from_gg_to_tp[contact.status]
                     personal_message = str(contact.description)
                 else:
