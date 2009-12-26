@@ -129,7 +129,6 @@ class GaduListChannel(
         self._conn_ref = weakref.ref(connection)
         telepathy.server.ChannelTypeContactList.__init__(self, connection, manager, props)
         telepathy.server.ChannelInterfaceGroup.__init__(self)
-        #papyon.event.AddressBookEventInterface.__init__(self, connection.msn_client)
         self._populate(connection)
 
     def GetLocalPendingMembersWithInfo(self):
@@ -212,14 +211,16 @@ class GaduSubscribeListChannel(GaduListChannel):
     def AddMembers(self, contacts, message):
         logger.info("Subscribe - AddMembers called")
         for h in contacts:
-            contact_pseudo_xmled = ET.fromstring("""\n<Contact><Guid>%s</Guid><GGNumber>%s</GGNumber><ShowName>%s</ShowName></Contact>\n""" % (str(handle.name), str(handle.name), str(handle.name)))
-            c = GaduContact.from_xml(contact_pseudo_xmled)
+            handle = self._conn.handle(telepathy.constants.HANDLE_TYPE_CONTACT, h)
+            contact_xml = ET.Element("Contact")
+            ET.SubElement(contact_xml, "Guid").text = str(handle.name)
+            ET.SubElement(contact_xml, "GGNumber").text = str(handle.name)
+            ET.SubElement(contact_xml, "ShowName").text = str(handle.name)
+            ET.SubElement(contact_xml, "Groups")
+            c = GaduContact.from_xml(contact_xml)
             self._conn_ref().gadu_client.addContact( c )
             #config.addNewContact( c )
             self._conn_ref().gadu_client.notifyAboutContact( c )
-            
-
-            handle = self._conn.handle(telepathy.constants.HANDLE_TYPE_CONTACT, h)
             logger.info("Adding contact: %s" % (handle.name))
             self.MembersChanged('', [handle], (), (), (), 0,
                     telepathy.CHANNEL_GROUP_CHANGE_REASON_INVITED)
