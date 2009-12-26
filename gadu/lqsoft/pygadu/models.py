@@ -100,10 +100,11 @@ class GaduProfile(object):
             raise RuntimeError("You need to be connected, to import contact list from the server.")
 
         def parse_xml(data):
+            print zlib.decompress(data)
             book = ET.fromstring(zlib.decompress(data))
             self._flushContacts()
             
-            for elem in book.find('Groups').getchildren():                
+            for elem in book.find('Groups').getchildren():
                 self.addGroup( GaduContactGroup.from_xml(elem) )
 
             for elem in book.find('Contacts').getchildren():
@@ -158,6 +159,10 @@ class GaduProfile(object):
     def contacts(self):
         return self.__contacts.itervalues()
 
+    @property
+    def groups(self):
+        return self.__groups.itervalues()
+
 class Def(object):
     def __init__(self, type, default_value, required=False, exportable=True, init=lambda x: x):
         self.type = type
@@ -196,8 +201,9 @@ class FlatXMLObject(object):
             if v.required and elem is None:
                 raise ValueError("Invalid element - need child element %s to unpack." % k)
 
-            dict[k] = v.type(elem.text if elem is not None and elem.text else v.default)           
-
+            dict[k] = v.type(elem.text if elem is not None and elem.text else v.default)
+            if k == 'Groups':
+                dict[k] = v.type(ET.tostring(elem) if elem is not None else v.default)
         return cls(**dict)          
 
 class GaduContactGroup(FlatXMLObject):
@@ -225,7 +231,7 @@ class GaduContact(FlatXMLObject):
         'Birth':            mkdef(str, ''),
         'City':             mkdef(str, ''),
         'Province':         mkdef(str, ''),
-        # 'Groups':           mkdef(list, ['0'], init lambda v: [ int(x) for x in v.split() ]),
+        'Groups':           mkdef(str, ''),
         'CurrentAvatar':    mkdef(int, 0),
         # 'Avatars':          mkdef(list, []),
         'UserActivatedInMG':mkdef(bool, False),

@@ -20,20 +20,19 @@
 import logging
 
 import telepathy
-import papyon
-import papyon.event
+#import papyon
+#import papyon.event
 
-from butterfly.util.decorator import async
-from butterfly.handle import ButterflyHandleFactory
-from butterfly.channel.contact_list import ButterflyListChannel
+from gadu.util.decorator import async
+from gadu.handle import GaduHandleFactory
+from gadu.channel.contact_list import GaduListChannel
 
-__all__ = ['ButterflyGroupChannel']
+__all__ = ['GaduGroupChannel']
 
-logger = logging.getLogger('Butterfly.GroupChannel')
+logger = logging.getLogger('Gadu.GroupChannel')
 
 
-class ButterflyGroupChannel(ButterflyListChannel,
-            papyon.event.AddressBookEventInterface):
+class GaduGroupChannel(GaduListChannel):
 
     def __init__(self, connection, manager, props):
         self.__pending_add = []

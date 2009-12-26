@@ -72,36 +72,74 @@ class GaduConfig(object):
         return self.roster
 
     def make_contacts_file(self, groups, contacts):
-        start = """<?xml version='1.0'?>\n<config>"""
-        end = """\n</config>\n"""
+        contactbook_xml = ET.Element("ContactBook")
 
-        new_groups = """"""
-        new_contacts = """"""
+        groups_xml = ET.SubElement(contactbook_xml, "Groups")
+        contacts_xml = ET.SubElement(contactbook_xml, "Contacts")
 
-        groups_i = 0
-        contacts_i = 0
-
-        #for group in groups:
-        #    #TODO: nie wiem co tu ma byc bo nie wiem jak wyglada struktura grup... jeszcze :P
-        #    groups_i = groups_i+1
-        #    group += """<Contact><Guid>5120225</Guid><GGNumber>5120225</GGNumber><ShowName>moj numer</ShowName></Contact>"""
-        if groups_i == 0:
-            new_groups = """\n<Groups />\n"""
+        for group in groups:
+            #Id, Name, IsExpanded, IsRemovable
+            group_xml = ET.SubElement(groups_xml, "Group")
+            ET.SubElement(group_xml, "Id").text = group.Id
+            ET.SubElement(group_xml, "Name").text = group.Name
+            ET.SubElement(group_xml, "IsExpanded").text = str(group.IsExpanded)
+            ET.SubElement(group_xml, "IsRemovable").text = str(group.IsRemovable)
 
         for contact in contacts:
-            #TODO: nie wiem co tu ma byc bo nie wiem jak wyglada struktura grup... jeszcze :P
-            contacts_i = contacts_i+1
-            if contacts_i == 1:
-                new_contacts = """<Contacts>"""
-            new_contacts += """\n<Contact><Guid>%s</Guid><GGNumber>%s</GGNumber><ShowName>%s</ShowName></Contact>\n""" % (contact.uin, contact.uin, contact.ShowName)
-        if contacts_i == 0:
-            new_contacts = """<Contacts />"""
-        else:
-            new_contacts += """</Contacts>"""
+            #Guid, GGNumber, ShowName. MobilePhone. HomePhone, Email, WWWAddress, FirstName, LastName, Gender, Birth, City, Province, Groups, CurrentAvatar, Avatars
+            contact_xml = ET.SubElement(contacts_xml, "Contact")
+            ET.SubElement(contact_xml, "Guid").text = contact.Guid
+            ET.SubElement(contact_xml, "GGNumber").text = contact.GGNumber
+            ET.SubElement(contact_xml, "ShowName").text = contact.ShowName
+            contact_groups_xml = ET.SubElement(contact_xml, "Groups")
+            contact_groups = ET.fromstring(contact.Groups)
+            for group in contact_groups.getchildren():
+                ET.SubElement(contact_groups_xml, "GroupId").text = group.text
+            #ET.SubElement(contact_xml, "Groups").text = contact.Groups
+            #contact_groups_xml = ET.SubElement(contact_xml, "Groups")
+            #ET.SubElement(contact_groups_xml, "ShowName").text = contact.ShowName
+            #ET.SubElement(contact_groups_xml, "GroupId").text = contact.GroupId
 
-
-        #lets split all togheter
-        xml_file = start+new_groups+new_contacts+end
+        #ET.dump(contactbook_xml)
+        xml_file = ET.tostring(contactbook_xml)
+        
+#        start = """<?xml version='1.0'?>\n<config>"""
+#        end = """\n</config>\n"""
+#
+#        new_groups = """"""
+#        new_contacts = """"""
+#
+#        groups_i = 0
+#        contacts_i = 0
+#
+#
+##        for group in groups:
+##            #TODO: nie wiem co tu ma byc bo nie wiem jak wyglada struktura grup... jeszcze :P
+##            groups_i = groups_i+1
+##            if groups_i == 1:
+##                new_groups = """<Groups>"""
+##            new_groups += """<Group><Id>00000000-0000-0000-0000-000000000000</Id><Name>Pozostale</Name><IsExpanded>true</IsExpanded><IsRemovable>false</IsRemovable></Group>"""
+##        if groups_i == 0:
+##            new_groups = """<Groups />"""
+##        else:
+##            new_groups += """</Groups>"""
+#
+#        new_groups = """<Groups />"""
+#
+#        for contact in contacts:
+#            #TODO: nie wiem co tu ma byc bo nie wiem jak wyglada struktura grup... jeszcze :P
+#            contacts_i = contacts_i+1
+#            if contacts_i == 1:
+#                new_contacts = """<Contacts>"""
+#            new_contacts += """\n<Contact><Guid>%s</Guid><GGNumber>%s</GGNumber><ShowName>%s</ShowName><Groups><GroupId>7ad8dc13-37a7-41eb-9ef1-7bf93dc8dab6</GroupId></Groups></Contact>\n""" % (contact.uin, contact.uin, contact.ShowName)
+#        if contacts_i == 0:
+#            new_contacts = """<Contacts />"""
+#        else:
+#            new_contacts += """</Contacts>"""
+#
+#
+#        #lets split all togheter
+#        xml_file = start+new_groups+new_contacts+end
 
         #and save that
         config_file = open(self.path, 'wb+')
@@ -395,7 +433,7 @@ class GaduConnection(telepathy.server.Connection,
 
     def updateContactsFile(self):
         """Method that updates contact file when it changes and in loop every 5 seconds."""
-        self.configfile.make_contacts_file(None, self.profile.contacts)
+        self.configfile.make_contacts_file(self.profile.groups, self.profile.contacts)
         reactor.callLater(5, self.updateContactsFile)
 
     def makeTelepathyContactsChannel(self):
@@ -414,7 +452,7 @@ class GaduConnection(telepathy.server.Connection,
         #TODO: that contacts should be written into XML file with contacts. I need to write it :)
         logger.info("No contacts in the XML contacts file yet. Contacts imported.")
 
-        self.configfile.make_contacts_file(None, self.profile.contacts)
+        self.configfile.make_contacts_file(self.profile.groups, self.profile.contacts)
         reactor.callLater(5, self.updateContactsFile)
 
         self.makeTelepathyContactsChannel()
@@ -430,7 +468,7 @@ class GaduConnection(telepathy.server.Connection,
         if self.configfile.get_contacts_count() == 0:
             self.profile.importContacts(self.on_contactsImported)
         else:
-            self.configfile.make_contacts_file(None, self.profile.contacts)
+            self.configfile.make_contacts_file(self.profile.groups, self.profile.contacts)
             reactor.callLater(5, self.updateContactsFile)
 
             self.makeTelepathyContactsChannel()
