@@ -224,18 +224,9 @@ class GaduSubscribeListChannel(GaduListChannel):
             logger.info("Adding contact: %s" % (handle.name))
             self.MembersChanged('', [handle], (), (), (), 0,
                     telepathy.CHANNEL_GROUP_CHANGE_REASON_INVITED)
-
+            #try to set alias
+            handle.contact.ShowName = self._conn_ref().get_contact_alias(handle.id)
             logger.info("Contact added.")
-
-#        logger.info("Subscribe - Add Members called.")
-#        handle = self._conn.handle(telepathy.HANDLE_TYPE_CONTACT, handle_id)
-#        if handle.contact is not None and \
-#           handle.contact.is_member(papyon.Membership.FORWARD):
-#            return True
-#
-#        account = handle.account
-#        network = handle.network
-#        groups = list(handle.pending_groups)
 
     def RemoveMembers(self, contacts, message):
         for h in contacts:

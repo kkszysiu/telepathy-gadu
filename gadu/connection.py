@@ -233,6 +233,9 @@ class GaduConnection(telepathy.server.Connection,
         self.check_handle(handle_type, handle_id)
         return self._handles[handle_type, handle_id]
 
+    def get_contact_alias(self, handle_id):
+        return self._get_alias(handle_id)
+
     def get_handle_id_by_name(self, handle_type, name):
         """Returns a handle ID for the given type and name
 

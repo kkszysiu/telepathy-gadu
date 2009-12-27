@@ -20,9 +20,6 @@ import logging
 
 import telepathy
 import telepathy.constants
-#import papyon
-#from papyon.service.description.AB.constants import \
-#    ContactGeneral, ContactAnnotations
 
 from gadu.handle import GaduHandleFactory
 from gadu.util.decorator import async
@@ -35,6 +32,7 @@ class GaduAliasing(telepathy.server.ConnectionInterfaceAliasing):
 
     def __init__(self):
         telepathy.server.ConnectionInterfaceAliasing.__init__(self)
+        self.aliases = {}
 
     def GetAliasFlags(self):
         return telepathy.constants.CONNECTION_ALIAS_FLAG_USER_SET
@@ -69,9 +67,9 @@ class GaduAliasing(telepathy.server.ConnectionInterfaceAliasing):
                 
                 #alias = unicode(alias, 'utf-8')
                 logger.info("Contact %s alias changed to '%s'" % (unicode(handle.name), alias))
+                self.aliases[handle.name] = alias
                 self.AliasesChanged([(handle, alias)])
             else:
-                #self.msn_client.profile.display_name = alias.encode('utf-8')
                 logger.info("Self alias changed to '%s'" % alias)
                 self.AliasesChanged(((GaduHandleFactory(self, 'self'), alias), ))
 
@@ -113,7 +111,10 @@ class GaduAliasing(telepathy.server.ConnectionInterfaceAliasing):
             alias = unicode('Ja', 'utf-8')
         else:
             contact = handle.contact
-            if contact is None:
+            if self.aliases.has_key(handle.name):
+                alias = self.aliases[handle.name]
+                del self.aliases[handle.name]
+            elif contact is None:
                 alias = handle.name
             else:
                 alias = contact.ShowName
