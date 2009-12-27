@@ -21,6 +21,10 @@ import logging
 
 import telepathy
 
+import xml.etree.ElementTree as ET
+
+from gadu.lqsoft.pygadu.models import GaduProfile, GaduContact, GaduContactGroup
+
 from gadu.util.decorator import async
 from gadu.handle import GaduHandleFactory
 from gadu.channel.contact_list import GaduListChannel
@@ -39,12 +43,22 @@ class GaduGroupChannel(GaduListChannel):
         GaduListChannel.__init__(self, connection, manager, props)
         self.GroupFlagsChanged(telepathy.CHANNEL_GROUP_FLAG_CAN_ADD | 
                 telepathy.CHANNEL_GROUP_FLAG_CAN_REMOVE, 0)
-#        @async
-#        def create_group():
-#            if self._handle.group is None:
-#                name = self._handle.name.encode("utf-8")
-#                connection.msn_client.address_book.add_group(name)
-#        create_group()
+        @async
+        def create_group():
+            if self._handle.group is None:
+                name = self._handle.name.encode("utf-8")
+
+                for group in self.conn.profile.groups:
+                    if group.Name != name:
+                        group_xml = ET.Element("Group")
+                        ET.SubElement(group_xml, "Id").text = self._handle.id
+                        ET.SubElement(group_xml, "Name").text = name
+                        ET.SubElement(group_xml, "IsExpanded").text = str('True')
+                        ET.SubElement(group_xml, "IsRemovable").text = str('True')
+
+                        g = GaduContactGroup.from_xml(group_xml)
+                        self.conn.profile.addGroup(g)
+        create_group()
 
 #
 #    def AddMembers(self, contacts, message):
