@@ -118,9 +118,10 @@ class GaduListHandle(GaduHandle):
 class GaduGroupHandle(GaduHandle):
     def __init__(self, connection, id, group_name):
         handle_type = telepathy.HANDLE_TYPE_GROUP
-        self.handle_name = group_name
+        handle_name = group_name
         self._connection = connection
-        GaduHandle.__init__(self, connection, id, handle_type, self,handle_name)
+        self.handle_name = group_name
+        GaduHandle.__init__(self, connection, id, handle_type, handle_name)
 
     @property
     def group(self):
