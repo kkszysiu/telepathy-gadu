@@ -22,6 +22,7 @@ from gadu.handle import GaduHandleFactory
 from gadu.capabilities import GaduCapabilities
 from gadu.contacts import GaduContacts
 from gadu.channel_manager import GaduChannelManager
+from gadu.util.decorator import async
 
 __all__ = ['GaduConnection']
 
@@ -388,6 +389,7 @@ class GaduConnection(telepathy.server.Connection,
         self.configfile.make_contacts_file(self.profile.groups, self.profile.contacts)
         reactor.callLater(5, self.updateContactsFile)
 
+    @async
     def makeTelepathyContactsChannel(self):
         logger.debug("Method makeTelepathyContactsChannel called.")
         handle = GaduHandleFactory(self, 'list', 'subscribe')
@@ -400,6 +402,7 @@ class GaduConnection(telepathy.server.Connection,
 #            handle, False)
 #        self._channel_manager.channel_for_props(props, signal=True)
 
+    @async
     def makeTelepathyGroupChannels(self):
         logger.debug("Method makeTelepathyGroupChannels called.")
         for group in self.profile.groups:
@@ -409,7 +412,7 @@ class GaduConnection(telepathy.server.Connection,
                 telepathy.CHANNEL_TYPE_CONTACT_LIST, handle, False)
             self._channel_manager.channel_for_props(props, signal=True)
 
-
+    @async
     def on_contactsImported(self):
         #TODO: that contacts should be written into XML file with contacts. I need to write it :)
         logger.info("No contacts in the XML contacts file yet. Contacts imported.")
@@ -424,6 +427,7 @@ class GaduConnection(telepathy.server.Connection,
         self.StatusChanged(telepathy.CONNECTION_STATUS_CONNECTED,
                 telepathy.CONNECTION_STATUS_REASON_REQUESTED)
 
+    @async
     def on_loginSuccess(self):
         logger.info("Connected")
 
@@ -435,12 +439,13 @@ class GaduConnection(telepathy.server.Connection,
             reactor.callLater(5, self.updateContactsFile)
 
             self.makeTelepathyContactsChannel()
-            #self.makeTelepathyGroupChannels()
+            self.makeTelepathyGroupChannels()
 
             self._status = telepathy.CONNECTION_STATUS_CONNECTED
             self.StatusChanged(telepathy.CONNECTION_STATUS_CONNECTED,
                     telepathy.CONNECTION_STATUS_REASON_REQUESTED)
 
+    @async
     def on_loginFailed(self):
         logger.info("Method on_loginFailed called.")
         self._status = telepathy.CONNECTION_STATUS_DISCONNECTED
@@ -448,12 +453,14 @@ class GaduConnection(telepathy.server.Connection,
                 telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED)
         reactor.stop()
 
+    @async
     def on_updateContact(self, contact):
         handle_id = self.get_handle_id_by_name(telepathy.constants.HANDLE_TYPE_CONTACT, str(contact.uin))
         handle = self.handle(telepathy.constants.HANDLE_TYPE_CONTACT, handle_id)
         logger.info("Method on_updateContact called, status changed for UIN: %s, id: %s, status: %s, description: %s" % (contact.uin, handle.id, contact.status, contact.description))
         self._presence_changed(handle, contact.status, contact.get_desc())
 
+    @async
     def on_messageReceived(self, msg):
         handle_id = self.get_handle_id_by_name(telepathy.constants.HANDLE_TYPE_CONTACT,
                                   str(msg.sender))
