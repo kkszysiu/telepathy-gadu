@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import logging
+import logging, hashlib
 
 import telepathy
 
@@ -40,6 +40,7 @@ class GaduGroupChannel(GaduListChannel):
         self.__pending_add = []
         self.__pending_remove = []
         self.conn = connection
+        self.groups = {}
         GaduListChannel.__init__(self, connection, manager, props)
         self.GroupFlagsChanged(telepathy.CHANNEL_GROUP_FLAG_CAN_ADD | 
                 telepathy.CHANNEL_GROUP_FLAG_CAN_REMOVE, 0)
@@ -49,21 +50,33 @@ class GaduGroupChannel(GaduListChannel):
                 name = self._handle.name.encode("utf-8")
                 for group in self.conn.profile.groups:
                     if group.Name != name:
+                        h = hashlib.md5()
+                        h.update(name)
+
                         group_xml = ET.Element("Group")
-                        ET.SubElement(group_xml, "Id").text = self._handle.id
+                        ET.SubElement(group_xml, "Id").text = h.hexdigest()
                         ET.SubElement(group_xml, "Name").text = name
                         ET.SubElement(group_xml, "IsExpanded").text = str('True')
                         ET.SubElement(group_xml, "IsRemovable").text = str('True')
 
                         g = GaduContactGroup.from_xml(group_xml)
                         self.conn.profile.addGroup(g)
+                        
+            for group in self.conn.profile.groups:
+                self.groups[group.Id] = group.Name
+
+            for contact in self.conn.profile.contacts:
+                contact_groups = ET.fromstring(contact.Groups)
+                if contact.Groups:
+                    for group in contact_groups.getchildren():
+                        print group.text
+                        print self.groups[group.text]
+                        if self.groups.has_key(group.text):
+                            if self.groups[group.text] == self._handle.group.Name:
+                                self.add_contact_to_group(self._handle.group, contact)
+
+            print str(self.groups)
         create_group()
-#        @async
-#        def create_group():
-#            if self._handle.group is None:
-#                name = self._handle.name.encode("utf-8")
-#                #connection.msn_client.address_book.add_group(name)
-#        create_group()
 
 
     def AddMembers(self, contacts, message):
@@ -145,6 +158,8 @@ class GaduGroupChannel(GaduListChannel):
 #            logger.debug("Contact %s removed from group %s" %
 #                    (handle.name, group_name))
 #
+
+    @async
     def add_contact_to_group(self, group, contact):
         group_name = group.Name.decode("utf-8")
         if group_name == self._handle.name:
@@ -152,12 +167,34 @@ class GaduGroupChannel(GaduListChannel):
                     contact.uin, None)
             added = set()
             added.add(handle)
+
+            if group.Name and group.Id:
+                is_group = False
+                #if
+                #generate group id
+                #h = hashlib.md5()
+                #h.update(self._handle.name)
+
+                contact_groups_xml = ET.Element("Groups")
+                contact_groups = ET.fromstring(contact.Groups)
+                if contact.Groups:
+                    for c_group in contact_groups.getchildren():
+                        if c_group.text == group.Id:
+                            is_group = True
+                        ET.SubElement(contact_groups_xml, "GroupId").text = c_group.text
+                if is_group != True:
+                    ET.SubElement(contact_groups_xml, "GroupId").text = group.Id
+                c_groups = ET.tostring(contact_groups_xml)
+
+                contact.updateGroups(c_groups)
+
             self.MembersChanged('', added, (), (), (), 0,
                     telepathy.CHANNEL_GROUP_CHANGE_REASON_NONE)
 
             logger.debug("Contact %s added to group %s" %
                     (handle.name, group_name))
 
+    @async
     def delete_contact_from_group(self, group, contact):
         group_name = group.Name.decode("utf-8")
         if group_name == self._handle.name:

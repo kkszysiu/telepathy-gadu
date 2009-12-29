@@ -268,11 +268,14 @@ class GaduContact(FlatXMLObject):
     def updateName(self, name):
         self.ShowName = name
 
+    def updateGroups(self, groups):
+        self.Groups = groups
+
     def get_desc(self):
         print 'Tak to get_desc, desctiption.text zwraca: %s a samo description: %s' % (self.description.text, self.description)
-        try:
-            return self.description.text if self.description.text is not None else self.description
-        except:
+        if self.description.text:
+            return self.description.text
+        else:
             return ''
 
 #     @classmethod
