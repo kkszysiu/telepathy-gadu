@@ -457,7 +457,7 @@ class GaduConnection(telepathy.server.Connection,
     def on_updateContact(self, contact):
         handle_id = self.get_handle_id_by_name(telepathy.constants.HANDLE_TYPE_CONTACT, str(contact.uin))
         handle = self.handle(telepathy.constants.HANDLE_TYPE_CONTACT, handle_id)
-        logger.info("Method on_updateContact called, status changed for UIN: %s, id: %s, status: %s, description: %s" % (contact.uin, handle.id, contact.status, contact.description))
+        logger.info("Method on_updateContact called, status changed for UIN: %s, id: %s, status: %s, description: %s" % (contact.uin, handle.id, contact.status, contact.get_desc()))
         self._presence_changed(handle, contact.status, contact.get_desc())
 
     @async

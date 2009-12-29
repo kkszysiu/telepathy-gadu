@@ -197,7 +197,8 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
                 contact = handle.contact
                 if contact is not None:
                     presence = GaduPresenceMapping.to_telepathy[contact.status]
-                    personal_message = unicode(contact.description, "utf-8")
+                    #thats bad, mkay?
+                    personal_message = unicode(contact.get_desc(), "utf-8")
                 else:
                     presence = GaduPresenceMapping.OFFLINE
                     personal_message = u""
@@ -248,7 +249,9 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
                 contact = handle.contact
                 if contact is not None:
                     presence = GaduPresenceMapping.from_gg_to_tp[contact.status]
-                    personal_message = str(contact.description)
+                    #that bad, I dont know but when I set desc there I didnt get any contacts :/
+                    #personal_message = str(contact.get_desc())
+                    personal_message = str('')
                 else:
                     presence = GaduPresenceMapping.OFFLINE
                     personal_message = u""
