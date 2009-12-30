@@ -170,10 +170,6 @@ class GaduGroupChannel(GaduListChannel):
 
             if group.Name and group.Id:
                 is_group = False
-                #if
-                #generate group id
-                #h = hashlib.md5()
-                #h.update(self._handle.name)
 
                 contact_groups_xml = ET.Element("Groups")
                 contact_groups = ET.fromstring(contact.Groups)
@@ -202,6 +198,16 @@ class GaduGroupChannel(GaduListChannel):
                     contact.uin, None)
             removed = set()
             removed.add(handle)
+
+            contact_groups_xml = ET.Element("Groups")
+            contact_groups = ET.fromstring(contact.Groups)
+            if contact.Groups:
+                for c_group in contact_groups.getchildren():
+                    if c_group.text != group.Id:
+                        ET.SubElement(contact_groups_xml, "GroupId").text = c_group.text
+            c_groups = ET.tostring(contact_groups_xml)
+
+            contact.updateGroups(c_groups)
 
             self.MembersChanged('', (), removed, (), (), 0,
                     telepathy.CHANNEL_GROUP_CHANGE_REASON_NONE)
