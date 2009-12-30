@@ -69,13 +69,9 @@ class GaduGroupChannel(GaduListChannel):
                 contact_groups = ET.fromstring(contact.Groups)
                 if contact.Groups:
                     for group in contact_groups.getchildren():
-                        print group.text
-                        print self.groups[group.text]
                         if self.groups.has_key(group.text):
                             if self.groups[group.text] == self._handle.group.Name:
                                 self.add_contact_to_group(self._handle.group, contact)
-
-            print str(self.groups)
         create_group()
 
 
