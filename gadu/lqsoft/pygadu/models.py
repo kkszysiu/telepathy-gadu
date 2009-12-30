@@ -89,10 +89,10 @@ class GaduProfile(object):
 
         self.__connection.changeStatus(new_state, new_description)
 
-    def sendTo(self, uin, message):
+    def sendTo(self, uin, html_message, plain_message):
         if not self.connected:
             raise RuntimeError("You need to be connected, to send messages.")
-        self.__connection.sendHTMLMessage(uin, message + '\0')
+        self.__connection.sendHTMLMessage(uin, html_message + '\0', plain_message + '\0')
 
     def importContacts(self, callback):
         """Issue an import request. This is non-blocking and returns no data."""

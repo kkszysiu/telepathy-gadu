@@ -165,14 +165,14 @@ class GaduClient(Protocol):
     def sendPing(self):
         self._sendPacket( Resolver.by_name('PingPacket')() )
 
-    def sendHTMLMessage(self, rcpt, html_text):
+    def sendHTMLMessage(self, rcpt, html_text, plain_message):
         klass = Resolver.by_name('MessageOutPacket')
 
         attrs = StructMsgAttrs()
         attrs.richtext = StructRichText()
 
         payload = StructMessage(klass=StructMessage.CLASS.CHAT, \
-            html_message=html_text, plain_message='TEST\0', \
+            html_message=html_text, plain_message=plain_message, \
             attrs = attrs)
 
         self._sendPacket( klass( recipient=rcpt, seq=int(time.time()), content=payload) )

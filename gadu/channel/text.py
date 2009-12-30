@@ -46,7 +46,7 @@ class GaduTextChannel(telepathy.server.ChannelTypeText):
     def Send(self, message_type, text):
         if message_type == telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
             logger.info("Sending message : %s" % unicode(text))
-            self.conn.gadu_client.sendTo(int(self.contact.uin), str(text+str('\x00')))
+            self.conn.gadu_client.sendTo(int(self.contact.uin), str(text), str(text))
         else:
             raise telepathy.NotImplemented("Unhandled message type")
         self.Sent(int(time.time()), message_type, text)
