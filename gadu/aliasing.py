@@ -103,14 +103,10 @@ class GaduAliasing(telepathy.server.ConnectionInterfaceAliasing):
         """Get the alias from one handle id"""
         handle = self.handle(telepathy.HANDLE_TYPE_CONTACT, handle_id)
         if handle == GaduHandleFactory(self, 'self'):
-#            display_name = self.msn_client.profile.display_name
-#            if display_name == "":
-#                display_name = handle.get_name().split('@', 1)[0]
-#                display_name = display_name.replace("_", " ")
-#            alias = unicode(display_name, 'utf-8')
             alias = unicode('Ja', 'utf-8')
         else:
             contact = handle.contact
+            #print str(self.aliases)
             if self.aliases.has_key(handle.name):
                 alias = self.aliases[handle.name]
                 del self.aliases[handle.name]
