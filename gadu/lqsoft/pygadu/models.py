@@ -34,14 +34,22 @@ class GaduProfile(object):
 
     def _updateContact(self, notify):
         # notify is of class GGStruct_Status80
-        try:
-            contact = self.__contacts[notify.uin]
-        except KeyError:
-            contact = GaduContact.simple_make(self, notify.uin, "Unknown User")
+        if notify.uin != self.uin:
+            if self.__contacts.has_key(notify.uin):
+                contact = self.__contacts[notify.uin]
+            else:
+                contact_xml = ET.Element("Contact")
+                ET.SubElement(contact_xml, "Guid").text = notify.uin
+                ET.SubElement(contact_xml, "GGNumber").text = notify.uin
+                ET.SubElement(contact_xml, "ShowName").text = "Unknown User"
+                ET.SubElement(contact_xml, "Groups")
+                c = GaduContact.from_xml(contact_xml)
+                self.addContact( c )
+                #contact = GaduContact.simple_make(self, notify.uin, "Unknown User")
 
-        contact.status =  notify.status
-        contact.description = notify.description
-        self.onContactStatusChange(contact)
+            contact.status =  notify.status
+            contact.description = notify.description
+            self.onContactStatusChange(contact)
 
     def _creditials(self, result, *args, **kwargs):
         """Called by protocol, to get creditials, result will be passed to login
