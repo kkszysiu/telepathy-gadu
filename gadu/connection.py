@@ -481,6 +481,7 @@ class GaduConnection(telepathy.server.Connection,
         channel = self._channel_manager.channel_for_props(props,
                 signal=True, conversation=None)
         message = "%s" % unicode(str(msg.content.plain_message).replace('\x00', '').decode('windows-1250').encode('utf-8'))
+        #print 'message: ', message
         channel.Received(self._recv_id, timestamp, handle, type, 0, message)
         self._recv_id += 1
 
