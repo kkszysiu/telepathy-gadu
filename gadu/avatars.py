@@ -128,7 +128,9 @@ class GaduAvatars(telepathy.server.ConnectionInterfaceAvatars):
             type = imghdr.what('', result)
             if type is None: type = 'jpeg'
             avatar = dbus.ByteArray(result)
-            token = handle.name
+            h = hashlib.new('md5')
+            h.update(url)
+            token = h.hexdigest()
             self.AvatarRetrieved(handle, token, avatar, 'image/' + type)
         except:
             logger.debug("Avatar retrieved but something went wrong.")
