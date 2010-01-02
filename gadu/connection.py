@@ -10,6 +10,7 @@ from gadu.lqsoft.pygadu.twisted_protocol import GaduClient
 from gadu.lqsoft.pygadu.models import GaduProfile, GaduContact, GaduContactGroup
 
 from twisted.internet import reactor, protocol
+from twisted.web.client import getPage
 from twisted.python import log
 
 import dbus
@@ -263,7 +264,8 @@ class GaduConnection(telepathy.server.Connection,
                     telepathy.CONNECTION_STATUS_REASON_REQUESTED)
             self.__disconnect_reason = telepathy.CONNECTION_STATUS_REASON_NONE_SPECIFIED
             #reactor.connectTCP('91.197.13.83', 8074, self.factory)
-            reactor.connectTCP(self._server[0], self._server[1], self.factory)
+            #reactor.connectTCP(self._server[0], self._server[1], self.factory)
+            self.getServerAdress(self._account[0])
 
     def Disconnect(self):
         logger.info("Disconnecting")
@@ -412,6 +414,30 @@ class GaduConnection(telepathy.server.Connection,
                 telepathy.CHANNEL_TYPE_CONTACT_LIST, handle, False)
             self._channel_manager.channel_for_props(props, signal=True)
 
+    def getServerAdress(self, uin):
+        logger.info("Fetching GG server adress.")
+        url = 'http://appmsg.gadu-gadu.pl/appsvc/appmsg_ver8.asp?fmnumber=%s&lastmsg=0&version=8.0.0.7669' % (str(uin))
+        d = getPage(url, timeout=10)
+        d.addCallback(self.on_server_adress_fetched, uin)
+        d.addErrback(self.on_server_adress_fetched_failed, uin)
+
+    def on_server_adress_fetched(self, result, uin):
+        try:
+            result = result.replace('\n', '')
+            a = result.split(' ')
+            if a[0] == '0' and a[-1:][0] != 'notoperating':
+                logger.info("GG server adress fetched, IP: %s" % (a[-1:][0]))
+                reactor.connectTCP(a[-1:][0], 8074, self.factory)
+            else:
+                raise Exception()
+        except:
+            logger.debug("Cannot get GG server IP adress. Trying again...")
+            self.getServerAdress(uin)
+
+    def on_server_adress_fetched_failed(self, error, uin):
+        logger.info("Failed to get page with server IP adress.")
+        self.getServerAdress(uin)
+
     @async
     def on_contactsImported(self):
         #TODO: that contacts should be written into XML file with contacts. I need to write it :)
@@ -459,8 +485,6 @@ class GaduConnection(telepathy.server.Connection,
         handle = self.handle(telepathy.constants.HANDLE_TYPE_CONTACT, handle_id)
         logger.info("Method on_updateContact called, status changed for UIN: %s, id: %s, status: %s, description: %s" % (contact.uin, handle.id, contact.status, contact.get_desc()))
         self._presence_changed(handle, contact.status, contact.get_desc())
-
-        self.AvatarUpdated(handle, str(time.time()))
 
     @async
     def on_messageReceived(self, msg):
