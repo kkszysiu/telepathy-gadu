@@ -17,7 +17,7 @@ import telepathy
 
 from gadu.presence import GaduPresence
 from gadu.aliasing import GaduAliasing
-#from butterfly.avatars import ButterflyAvatars
+from gadu.avatars import GaduAvatars
 from gadu.handle import GaduHandleFactory
 from gadu.capabilities import GaduCapabilities
 from gadu.contacts import GaduContacts
@@ -134,7 +134,7 @@ class GaduConnection(telepathy.server.Connection,
         telepathy.server.ConnectionInterfaceRequests,
         GaduPresence,
         GaduAliasing,
-#        ButterflyAvatars,
+        GaduAvatars,
         GaduCapabilities,
         GaduContacts
         ):
@@ -204,7 +204,7 @@ class GaduConnection(telepathy.server.Connection,
             telepathy.server.ConnectionInterfaceRequests.__init__(self)
             GaduPresence.__init__(self)
             GaduAliasing.__init__(self)
-#            ButterflyAvatars.__init__(self)
+            GaduAvatars.__init__(self)
             GaduCapabilities.__init__(self)
             GaduContacts.__init__(self)
 
@@ -459,6 +459,8 @@ class GaduConnection(telepathy.server.Connection,
         handle = self.handle(telepathy.constants.HANDLE_TYPE_CONTACT, handle_id)
         logger.info("Method on_updateContact called, status changed for UIN: %s, id: %s, status: %s, description: %s" % (contact.uin, handle.id, contact.status, contact.get_desc()))
         self._presence_changed(handle, contact.status, contact.get_desc())
+
+        self.AvatarUpdated(handle, str(time.time()))
 
     @async
     def on_messageReceived(self, msg):

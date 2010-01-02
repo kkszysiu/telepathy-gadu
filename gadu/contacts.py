@@ -37,8 +37,8 @@ class GaduContacts(telepathy.server.ConnectionInterfaceContacts):
     attributes = {
         telepathy.CONNECTION : 'contact-id',
         telepathy.CONNECTION_INTERFACE_SIMPLE_PRESENCE : 'presence',
-#        telepathy.CONNECTION_INTERFACE_ALIASING : 'alias',
-#        telepathy.CONNECTION_INTERFACE_AVATARS : 'token',
+        telepathy.CONNECTION_INTERFACE_ALIASING : 'alias',
+        telepathy.CONNECTION_INTERFACE_AVATARS : 'token',
         telepathy.CONNECTION_INTERFACE_CAPABILITIES : 'caps'
         }
 
