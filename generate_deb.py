@@ -1,7 +1,7 @@
 from py2deb import Py2deb
 from glob import glob
 
-version="0.1.0"
+version="0.2.0"
 changelog=open("NEWS","r").read()
 
 p=Py2deb("telepathy-gadu")
