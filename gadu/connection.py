@@ -213,7 +213,9 @@ class GaduConnection(telepathy.server.Connection,
 
             self.factory = GaduClientFactory(self.profile)
             self._channel_manager = GaduChannelManager(self)
+
             self._recv_id = 0
+            self.pending_contacts_to_group = {}
 
             # Call parent initializers
             telepathy.server.Connection.__init__(self, 'gadugadu', account, 'gadu')
