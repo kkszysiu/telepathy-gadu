@@ -63,12 +63,14 @@ class GaduConfig(object):
         if os.path.isfile(os.path.join(path, 'profile.xml')):
             pass
         else:
-            config_file = open(os.path.join(path, 'profile.xml'), 'wb+')
-            config_file.write("""<ContactBook>
-                <Groups />
-                <Contacts />
-            </ContactBook>""");
-            config_file.close()
+            contactbook_xml = ET.Element("ContactBook")
+
+            ET.SubElement(contactbook_xml, "Groups")
+            ET.SubElement(contactbook_xml, "Contacts")
+
+            main_xml = ET.ElementTree(contactbook_xml)
+            main_xml.write(os.path.join(path, 'profile.xml'), encoding="UTF-8")
+            
         self.path = os.path.join(path, 'profile.xml')
         return os.path.join(path, 'profile.xml')
 
@@ -114,13 +116,8 @@ class GaduConfig(object):
                 for group in contact_groups.getchildren():
                     ET.SubElement(contact_groups_xml, "GroupId").text = group.text
 
-        #ET.dump(contactbook_xml)
-        xml_file = ET.tostring(contactbook_xml)
-
-        #and save that
-        config_file = open(self.path, 'wb+')
-        config_file.write(xml_file);
-        config_file.close()
+        main_xml = ET.ElementTree(contactbook_xml)
+        main_xml.write(self.path, encoding="UTF-8")
 
     def get_contacts_count(self):
         return self.contacts_count

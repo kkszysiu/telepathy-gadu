@@ -108,7 +108,7 @@ class GaduProfile(object):
             raise RuntimeError("You need to be connected, to import contact list from the server.")
 
         def parse_xml(data):
-            print zlib.decompress(data)
+            #print zlib.decompress(data)
             book = ET.fromstring(zlib.decompress(data))
             self._flushContacts()
             

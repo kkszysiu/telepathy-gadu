@@ -48,7 +48,7 @@ class GaduGroupChannel(GaduListChannel):
         @async
         def create_group():
             if self._handle.group is None:
-                name = self._handle.name.encode("utf-8")
+                name = self._handle.name
                 for group in self.conn.profile.groups:
                     if group.Name != name:
                         h = hashlib.md5()
@@ -158,7 +158,7 @@ class GaduGroupChannel(GaduListChannel):
 
     @async
     def add_contact_to_group(self, group, contact):
-        group_name = group.Name.decode("utf-8")
+        group_name = group.Name
         if group_name == self._handle.name:
             handle = GaduHandleFactory(self.conn, 'contact',
                     contact.uin, None)
@@ -189,7 +189,7 @@ class GaduGroupChannel(GaduListChannel):
 
     @async
     def delete_contact_from_group(self, group, contact):
-        group_name = group.Name.decode("utf-8")
+        group_name = group.Name
         if group_name == self._handle.name:
             handle = GaduHandleFactory(self.conn, 'contact',
                     contact.uin, None)
