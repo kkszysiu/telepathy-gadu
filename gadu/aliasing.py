@@ -57,9 +57,9 @@ class GaduAliasing(telepathy.server.ConnectionInterfaceAliasing):
                 logger.debug("Called SetAliases for handle: %s, alias: %s" % (handle.name, alias))
 
                 if alias == handle.name:
-                    alias = u""
+                    alias = ''
 
-                new_alias = alias.encode("utf-8")
+                new_alias = alias
 
                 try:
                     handle.contact.updateName(new_alias)
@@ -104,20 +104,19 @@ class GaduAliasing(telepathy.server.ConnectionInterfaceAliasing):
         """Get the alias from one handle id"""
         handle = self.handle(telepathy.HANDLE_TYPE_CONTACT, handle_id)
         if handle == GaduHandleFactory(self, 'self'):
-            alias = unicode('Ja', 'utf-8')
+            alias = 'Ja'
         else:
             contact = handle.contact
             #print str(self.aliases)
             if self.aliases.has_key(handle.name):
                 alias = self.aliases[handle.name]
-                del self.aliases[handle.name]
+                #del self.aliases[handle.name]
             elif contact is None:
                 alias = handle.name
             else:
                 alias = contact.ShowName
-                if alias == "" or alias is None:
+                if alias == '' or alias is None:
                      alias = contact.uin
-                alias = unicode(alias, 'utf-8')
         return alias
 
 #    @async
