@@ -72,7 +72,7 @@ class GaduGroupChannel(GaduListChannel):
                     for group in contact_groups.getchildren():
                         if self.groups.has_key(group.text):
                             if self.groups[group.text] == self._handle.group.Name:
-                                self.add_contact_to_group(self._handle.group, contact)
+                                self.add_contact_to_group(self._handle.group, contact, None)
         create_group()
 
 
@@ -82,10 +82,11 @@ class GaduGroupChannel(GaduListChannel):
                         contact_handle_id)
             logger.info("Adding contact %s to group %s" %
                     (unicode(contact_handle), unicode(self._handle)))
+
             contact = contact_handle.contact
             group = self._handle.group
 
-            self.add_contact_to_group(group, contact)
+            self.add_contact_to_group(group, contact, contact_handle)
 
 
     def RemoveMembers(self, contacts, message):
@@ -94,10 +95,11 @@ class GaduGroupChannel(GaduListChannel):
                         contact_handle_id)
             logger.info("Removing contact %s from pending group %s" %
                     (unicode(contact_handle), unicode(self._handle)))
+
             contact = contact_handle.contact
             group = self._handle.group
 
-            self.delete_contact_from_group(group, contact)
+            self.delete_contact_from_group(group, contact, contact_handle)
 
     def Close(self):
         logger.debug("Deleting group %s" % self._handle.name)
@@ -157,11 +159,16 @@ class GaduGroupChannel(GaduListChannel):
 #
 
     @async
-    def add_contact_to_group(self, group, contact):
+    def add_contact_to_group(self, group, contact, contact_handle):
         group_name = group.Name
         if group_name == self._handle.name:
+            if hasattr(contact, 'uin'):
+                contact_uin = contact.uin
+            else:
+                contact_uin = contact_handle.name
+
             handle = GaduHandleFactory(self.conn, 'contact',
-                    contact.uin, None)
+                    contact_uin, None)
             added = set()
             added.add(handle)
 
@@ -169,8 +176,8 @@ class GaduGroupChannel(GaduListChannel):
                 is_group = False
 
                 contact_groups_xml = ET.Element("Groups")
-                contact_groups = ET.fromstring(contact.Groups)
-                if contact.Groups:
+                if hasattr(contact, 'Groups'):
+                    contact_groups = ET.fromstring(contact.Groups)
                     for c_group in contact_groups.getchildren():
                         if c_group.text == group.Id:
                             is_group = True
@@ -179,7 +186,10 @@ class GaduGroupChannel(GaduListChannel):
                     ET.SubElement(contact_groups_xml, "GroupId").text = group.Id
                 c_groups = ET.tostring(contact_groups_xml)
 
-                contact.updateGroups(c_groups)
+                if hasattr(contact, 'updateGroups'):
+                    contact.updateGroups(c_groups)
+                else:
+                    self.conn.pending_contacts_to_group[contact_uin] = c_groups
 
             self.MembersChanged('', added, (), (), (), 0,
                     telepathy.CHANNEL_GROUP_CHANGE_REASON_NONE)
@@ -188,7 +198,7 @@ class GaduGroupChannel(GaduListChannel):
                     (handle.name, group_name))
 
     @async
-    def delete_contact_from_group(self, group, contact):
+    def delete_contact_from_group(self, group, contact, contact_handle):
         group_name = group.Name
         if group_name == self._handle.name:
             handle = GaduHandleFactory(self.conn, 'contact',

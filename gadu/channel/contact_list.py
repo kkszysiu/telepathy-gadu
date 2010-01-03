@@ -223,8 +223,16 @@ class GaduSubscribeListChannel(GaduListChannel):
             logger.info("Adding contact: %s" % (handle.name))
             self.MembersChanged('', [handle], (), (), (), 0,
                     telepathy.CHANNEL_GROUP_CHANGE_REASON_INVITED)
+
+            #alias and group settings for new contacts are bit tricky
             #try to set alias
             handle.contact.ShowName = self._conn_ref().get_contact_alias(handle.id)
+            #and group
+            if self._conn_ref().pending_contacts_to_group.has_key(handle.name):
+                logger.info("Trying to add temporary group.")
+                print str(self._conn_ref().pending_contacts_to_group)
+                print str(self._conn_ref().pending_contacts_to_group[handle.name])
+                handle.contact.updateGroups(self._conn_ref().pending_contacts_to_group[handle.name])
             logger.info("Contact added.")
 
     def RemoveMembers(self, contacts, message):
