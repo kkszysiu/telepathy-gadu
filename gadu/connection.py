@@ -298,8 +298,13 @@ class GaduConnection(telepathy.server.Connection,
             if handle_type == telepathy.HANDLE_TYPE_CONTACT:
                 contact_name = name
 
-                handle = GaduHandleFactory(self, 'contact',
-                        contact_name, None)
+                handle_id = self.get_handle_id_by_name(telepathy.constants.HANDLE_TYPE_CONTACT, str(contact_name))
+
+                if handle_id != 0:
+                    handle = self.handle(telepathy.constants.HANDLE_TYPE_CONTACT, handle_id)
+                else:
+                    handle = GaduHandleFactory(self, 'contact',
+                            str(contact_name), None)
 
 #                try:
 #                    #just check is contact_name is integer

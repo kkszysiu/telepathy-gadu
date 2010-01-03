@@ -4,7 +4,8 @@ __date__ ="$2009-07-14 07:33:27$"
 
 from gadu.lqsoft.pygadu.network_base import StructNotice
 import xml.etree.ElementTree as ET
-import hashlib, zlib
+import hashlib
+import zlib
 
 class GaduProfile(object):
 
@@ -280,7 +281,7 @@ class GaduContact(FlatXMLObject):
         self.Groups = groups
 
     def get_desc(self):
-        print 'Tak to get_desc, desctiption.text zwraca: %s a samo description: %s' % (self.description.text, self.description)
+        #print 'Tak to get_desc, desctiption.text zwraca: %s a samo description: %s' % (self.description.text, self.description)
         if self.description.text:
             return self.description.text
         else:
