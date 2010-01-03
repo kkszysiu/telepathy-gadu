@@ -1,6 +1,7 @@
-# telepathy-butterfly - an MSN connection manager for Telepathy
+# telepathy-gadu is the GaduGadu connection manager for Telepathy
 #
-# Copyright (C) 2007 Johann Prieur <johann.prieur@gmail.com>
+# Copyright (C) 2006-2007 Ali Sabil <ali.sabil@gmail.com>
+# Copyright (C) 2010 Krzysztof Klinikowski <kkszysiu@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
