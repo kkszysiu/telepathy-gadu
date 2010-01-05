@@ -99,7 +99,7 @@ class GaduGroupChannel(GaduListChannel):
             contact = contact_handle.contact
             group = self._handle.group
 
-            self.delete_contact_from_group(group, contact)
+            self.delete_contact_from_group(group, contact, contact_handle)
 
     def Close(self):
         logger.debug("Deleting group %s" % self._handle.name)
@@ -198,7 +198,7 @@ class GaduGroupChannel(GaduListChannel):
                     (handle.name, group_name))
 
     @async
-    def delete_contact_from_group(self, group, contact):
+    def delete_contact_from_group(self, group, contact, contact_handle):
         group_name = group.Name
         if group_name == self._handle.name:
             handle = GaduHandleFactory(self.conn, 'contact',
