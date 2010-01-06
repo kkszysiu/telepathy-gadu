@@ -45,29 +45,29 @@ class GaduPresenceMapping(object):
     OFFLINE = 'offline'
 
     to_gg = {
-            ONLINE:     'AVAILBLE',
+            ONLINE:     'AVAILABLE',
             BUSY:       'BUSY',
             IDLE:       'DND',
             INVISIBLE:  'HIDDEN',
-            OFFLINE:    'NOT_AVAILBLE'
+            OFFLINE:    'NOT_AVAILABLE'
             }
 
     to_telepathy = {
-            'AVAILBLE':                 ONLINE,
+            'AVAILABLE':                 ONLINE,
             'FFC':                      FFC,
             'BUSY':                     BUSY,
             'DND':                      IDLE,
             'HIDDEN':                   INVISIBLE,
-            'NOT_AVAILBLE':             OFFLINE
+            'NOT_AVAILABLE':             OFFLINE
             }
 
     from_gg_to_tp = {
-            #        'NOT_AVAILBLE':         0x0001,
-            #        'NOT_AVAILBLE_DESC':    0x0015,
+            #        'NOT_AVAILABLE':         0x0001,
+            #        'NOT_AVAILABLE_DESC':    0x0015,
             #        'FFC':                  0x0017,
             #        'FFC_DESC':             0x0018,
-            #        'AVAILBLE':             0x0002,
-            #        'AVAILBLE_DESC':        0x0004,
+            #        'AVAILABLE':             0x0002,
+            #        'AVAILABLE_DESC':        0x0004,
             #        'BUSY':                 0x0003,
             #        'BUSY_DESC':            0x0005,
             #        'DND':                  0x0021,

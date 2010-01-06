@@ -129,12 +129,12 @@ class MessageOutPacket(GaduPacket):
 @outpacket(0x38)
 class ChangeStatusPacket(GaduPacket): #NewStatus80
     STATUS = Enum({
-        'NOT_AVAILBLE':         0x0001,
-        'NOT_AVAILBLE_DESC':    0x0015,
+        'NOT_AVAILABLE':         0x0001,
+        'NOT_AVAILABLE_DESC':    0x0015,
         'FFC':                  0x0017,
         'FFC_DESC':             0x0018,
-        'AVAILBLE':             0x0002,
-        'AVAILBLE_DESC':        0x0004,
+        'AVAILABLE':             0x0002,
+        'AVAILABLE_DESC':        0x0004,
         'BUSY':                 0x0003,
         'BUSY_DESC':            0x0005,
         'DND':                  0x0021,

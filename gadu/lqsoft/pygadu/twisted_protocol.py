@@ -137,8 +137,9 @@ class GaduClient(Protocol):
         print "MSG_Status=%x, recipient=%d, seq=%d" % (msg.msg_status, msg.recipient, msg.seq) 
 
     def _handleDisconnectPacket(self, msg):
-         Protocol.connectionLost(self, None)
-         #self.loseConnection()
+        print 'Server sent - disconnect packet'
+        Protocol.connectionLost(self, None)
+        #self.loseConnection()
 
     def _sendAllContacts(self, result, *args, **kwargs):
         contacts = list( self.user_profile.contacts )
@@ -202,21 +203,21 @@ class GaduClient(Protocol):
 
         print ChangeStatusPacket.STATUS.FFC
 
-        if status == 'NOT_AVAILBLE':
+        if status == 'NOT_AVAILABLE':
             if desc == '' or desc == None:
-                gg_status = change_status_class.STATUS.NOT_AVAILBLE
+                gg_status = change_status_class.STATUS.NOT_AVAILABLE
             else:
-                gg_status = change_status_class.STATUS.NOT_AVAILBLE_DESC
+                gg_status = change_status_class.STATUS.NOT_AVAILABLE_DESC
         elif status == 'FFC':
             if desc == '' or desc == None:
                 gg_status = change_status_class.STATUS.FFC
             else:
                 gg_status = change_status_class.STATUS.FFC_DESC
-        elif status == 'AVAILBLE':
+        elif status == 'AVAILABLE':
             if desc == '' or desc == None:
-                gg_status = change_status_class.STATUS.AVAILBLE
+                gg_status = change_status_class.STATUS.AVAILABLE
             else:
-                gg_status = change_status_class.STATUS.AVAILBLE_DESC
+                gg_status = change_status_class.STATUS.AVAILABLE_DESC
         elif status == 'BUSY':
             if desc == '' or desc == None:
                 gg_status = change_status_class.STATUS.BUSY
@@ -233,7 +234,7 @@ class GaduClient(Protocol):
             else:
                 gg_status = change_status_class.STATUS.HIDDEN_DESC
         else:
-            gg_status = change_status_class.STATUS.NOT_AVAILBLE
+            gg_status = change_status_class.STATUS.NOT_AVAILABLE
 
         if desc == '' or desc == None:
             self._sendPacket( change_status_class(status=gg_status, flags=0x00000001) )
