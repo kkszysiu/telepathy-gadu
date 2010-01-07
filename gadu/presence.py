@@ -104,7 +104,7 @@ class GaduPresenceMapping(object):
 
     to_presence_type = {
             ONLINE:     telepathy.constants.CONNECTION_PRESENCE_TYPE_AVAILABLE,
-            FFC:     telepathy.constants.CONNECTION_PRESENCE_TYPE_AVAILABLE,
+            FFC:        telepathy.constants.CONNECTION_PRESENCE_TYPE_AVAILABLE,
             BUSY:       telepathy.constants.CONNECTION_PRESENCE_TYPE_BUSY,
             IDLE:       telepathy.constants.CONNECTION_PRESENCE_TYPE_EXTENDED_AWAY,
             INVISIBLE:  telepathy.constants.CONNECTION_PRESENCE_TYPE_HIDDEN,
@@ -165,14 +165,13 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
         logger.info("Setting Presence to '%s'" % presence)
         logger.info("Setting Personal message to '%s'" % message)
 
-        message.encode("utf-8")
+        message = message.encode('UTF-8')
 
-        if self._status != telepathy.CONNECTION_STATUS_CONNECTED:
-            self._initial_presence = presence
-            self._initial_personal_message = message
+        if self._status == telepathy.CONNECTION_STATUS_CONNECTED:
+            self._self_presence_changed(GaduHandleFactory(self, 'self'), presence, message)
+            self.profile.setMyState(presence, message)
         else:
-            self.msn_client.profile.personal_message = message
-            self.msn_client.profile.presence = presence
+            self._self_presence_changed(GaduHandleFactory(self, 'self'), presence, message)
 
     def get_presences(self, contacts):
         presences = {}
@@ -229,23 +228,23 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
         logger.info("Setting Presence to '%s'" % presence)
         logger.info("Setting Personal message to '%s'" % message)
 
-        message = message.encode("utf-8")
+        message = message.encode('UTF-8')
 
-        if self._status != telepathy.CONNECTION_STATUS_CONNECTED:
-            self._initial_presence = presence
-            self._initial_personal_message = message
-        else:
+        if self._status == telepathy.CONNECTION_STATUS_CONNECTED:
+            self._self_presence_changed(GaduHandleFactory(self, 'self'), presence, message)
             self.profile.setMyState(presence, message)
+        else:
+            self._self_presence_changed(GaduHandleFactory(self, 'self'), presence, message)
             
     def get_simple_presences(self, contacts):
         presences = {}
         for handle_id in contacts:
             handle = self.handle(telepathy.HANDLE_TYPE_CONTACT, handle_id)
-            try:
+            if handle == GaduHandleFactory(self, 'self'):
                 contact = handle.profile
                 presence = GaduPresenceMapping.OFFLINE
                 personal_message = u""
-            except AttributeError:
+            else:
                 #I dont know what to do here. Do I really need this? :P
                 contact = handle.contact
                 if contact is not None:
@@ -256,14 +255,6 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
                 else:
                     presence = GaduPresenceMapping.OFFLINE
                     personal_message = u""
-
-#            if contact is not None:
-#
-#                presence = ButterflyPresenceMapping.to_telepathy[contact.presence]
-#                personal_message = unicode(contact.personal_message, "utf-8")
-#            else:
-#                presence = ButterflyPresenceMapping.OFFLINE
-#                personal_message = u""
 
             presence_type = GaduPresenceMapping.to_presence_type[presence]
 
@@ -317,6 +308,21 @@ class GaduPresence(telepathy.server.ConnectionInterfacePresence,
             presence = GaduPresenceMapping.from_gg_to_tp[presence]
         except KeyError:
             presence = GaduPresenceMapping.from_gg_to_tp[0]
+        presence_type = GaduPresenceMapping.to_presence_type[presence]
+        personal_message = unicode(str(personal_message), "utf-8")
+
+        self.PresencesChanged({handle: (presence_type, presence, personal_message)})
+
+        arguments = {}
+        if personal_message:
+            arguments = {'message' : personal_message}
+
+        self.PresenceUpdate({handle: (int(time.time()), {presence:arguments})})
+
+    @async
+    def _self_presence_changed(self, handle, presence, personal_message):
+
+        presence = GaduPresenceMapping.to_telepathy[presence]
         presence_type = GaduPresenceMapping.to_presence_type[presence]
         personal_message = unicode(str(personal_message), "utf-8")
 

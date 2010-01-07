@@ -155,6 +155,10 @@ class GaduProfile(object):
         """Called when a message had been received"""
         pass
 
+    def onStatusNoticiesRecv(self):
+        """Called when a contact list notify was sent"""
+        pass
+
     def isContactExist(self, uin):
         return self.__contacts.has_key(uin)
 

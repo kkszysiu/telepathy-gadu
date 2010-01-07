@@ -188,6 +188,7 @@ class GaduConnection(telepathy.server.Connection,
             self.profile.onLoginFailure = self.on_loginFailed
             self.profile.onContactStatusChange = self.on_updateContact
             self.profile.onMessageReceived = self.on_messageReceived
+            self.profile.onStatusNoticiesRecv = self.on_StatusNoticiesRecv
 
             #lets try to make file with contacts etc ^^
             self.configfile = GaduConfig(int(parameters['account']))
@@ -216,6 +217,7 @@ class GaduConnection(telepathy.server.Connection,
 
             self._recv_id = 0
             self.pending_contacts_to_group = {}
+            self._status = None
 
             # Call parent initializers
             telepathy.server.Connection.__init__(self, 'gadugadu', account, 'gadu')
@@ -438,7 +440,7 @@ class GaduConnection(telepathy.server.Connection,
 
     def getServerAdress(self, uin):
         logger.info("Fetching GG server adress.")
-        url = 'http://appmsg.gadu-gadu.pl/appsvc/appmsg_ver8.asp?fmnumber=%s&lastmsg=0&version=8.0.0.7669' % (str(uin))
+        url = 'http://appmsg.gadu-gadu.pl/appsvc/appmsg_ver8.asp?fmnumber=%s&lastmsg=0&version=8.0.0.9103' % (str(uin))
         d = getPage(url, timeout=10)
         d.addCallback(self.on_server_adress_fetched, uin)
         d.addErrback(self.on_server_adress_fetched_failed, uin)
@@ -462,7 +464,6 @@ class GaduConnection(telepathy.server.Connection,
 
     @async
     def on_contactsImported(self):
-        #TODO: that contacts should be written into XML file with contacts. I need to write it :)
         logger.info("No contacts in the XML contacts file yet. Contacts imported.")
 
         self.configfile.make_contacts_file(self.profile.groups, self.profile.contacts)
@@ -489,9 +490,12 @@ class GaduConnection(telepathy.server.Connection,
             self.makeTelepathyContactsChannel()
             self.makeTelepathyGroupChannels()
 
-            self._status = telepathy.CONNECTION_STATUS_CONNECTED
-            self.StatusChanged(telepathy.CONNECTION_STATUS_CONNECTED,
-                    telepathy.CONNECTION_STATUS_REASON_REQUESTED)
+        self._status = telepathy.CONNECTION_STATUS_CONNECTED
+        self.StatusChanged(telepathy.CONNECTION_STATUS_CONNECTED,
+                telepathy.CONNECTION_STATUS_REASON_REQUESTED)
+
+    def on_StatusNoticiesRecv(self):
+        logger.info("Status noticies received.")
 
     @async
     def on_loginFailed(self):
