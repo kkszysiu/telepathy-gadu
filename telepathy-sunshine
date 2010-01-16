@@ -1,0 +1,76 @@
+#!/usr/bin/python
+
+import gobject
+import dbus.glib
+import signal
+import os
+import sys
+import logging
+
+from twisted.internet import gtk2reactor
+gtk2reactor.install()
+
+from twisted.internet import reactor, protocol
+if sys.version_info < (2, 5):
+    print >> sys.stderr, 'Critical: python >= 2.5 required. Exiting.'
+    sys.exit(1)
+
+import telepathy
+if telepathy.version < (0, 15, 11):
+    print >> sys.stderr, 'Critical: telepathy-python >= 0.15.11 required. Exiting.'
+    sys.exit(1)
+
+from telepathy.utils import debug_divert_messages
+
+debug_divert_messages(os.getenv('SUNSHINE_LOGFILE'))
+logging.basicConfig(level=logging.DEBUG)
+
+from sunshine import SunshineConnectionManager
+from sunshine import SunshineDebug
+from sunshine.util.decorator import async
+
+logger = logging.getLogger('Sunshine')
+
+IDLE_TIMEOUT = 5000
+PROCESS_NAME = 'telepathy-sunshine'
+
+if __name__ == '__main__':
+    try: # change process name for killall
+       import ctypes
+       libc = ctypes.CDLL('libc.so.6')
+       libc.prctl(15, PROCESS_NAME, 0, 0, 0)
+    except Exception, e:
+       logger.warning('Unable to set processName: %s" % e')
+
+    @async
+    def quit():
+        manager.quit()
+        reactor.stop()
+
+    if 'SUNSHINE_PERSIST' not in os.environ:
+        def timeout_cb():
+            if len(manager._connections) == 0:
+                logger.info('No connection received - quitting')
+                quit()
+            return False
+        gobject.timeout_add(IDLE_TIMEOUT, timeout_cb)
+        shutdown_callback = quit
+    else:
+        shutdown_callback = None
+
+    signal.signal(signal.SIGTERM, lambda : quit)
+
+    try:
+        manager = SunshineConnectionManager(shutdown_func=shutdown_callback)
+        handler = SunshineDebug(manager)
+    except dbus.exceptions.NameExistsException:
+        logger.warning('Failed to acquire bus name, connection manager already running?')
+        sys.exit(1)
+
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+
+    try:
+        reactor.run()
+    except KeyboardInterrupt:
+        manager.quit()
+        reactor.stop()

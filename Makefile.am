@@ -1,5 +1,5 @@
-SUBDIRS = data gadu
+SUBDIRS = data sunshine
 
-libexec_SCRIPTS = telepathy-gadu
+libexec_SCRIPTS = telepathy-sunshine
 
-EXTRA_DIST = telepathy-gadu
+EXTRA_DIST = telepathy-sunshine

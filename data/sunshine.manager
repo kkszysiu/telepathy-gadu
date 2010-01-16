@@ -1,0 +1,12 @@
+[ConnectionManager]
+Name = sunshine
+BusName = org.freedesktop.Telepathy.ConnectionManager.sunshine
+ObjectPath = /org/freedesktop/Telepathy/ConnectionManager/sunshine
+
+[Protocol gadugadu]
+param-account = s required
+param-password = s required
+param-server = s
+param-port = q
+default-server = 91.197.13.67
+default-port = 8074
